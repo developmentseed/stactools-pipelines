@@ -1,0 +1,7 @@
+---
+  id: "sentinel1"
+  arco: False
+  collection: "sentinel1"
+  compute: "awslambda"
+  sns: "arn:aws:sns:eu-central-1:214830741341:SentinelS1L1C"
+

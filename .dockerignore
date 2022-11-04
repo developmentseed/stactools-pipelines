@@ -1,0 +1,20 @@
+# Environments
+.tox
+.venv
+.devenv
+
+# CDK asset staging directory
+.cdk.staging
+cdk.out
+
+
+### Python ###
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Support for Project snippet scope
+!.vscode/*.code-snippets
+*.vim
+
