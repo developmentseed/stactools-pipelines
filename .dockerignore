@@ -1,7 +1,7 @@
 # Environments
-.tox
-.venv
-.devenv
+tox
+venv
+devenv
 
 # CDK asset staging directory
 .cdk.staging

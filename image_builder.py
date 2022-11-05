@@ -11,7 +11,6 @@ with open("./pipelines/sentinel1/config.yaml") as f:
     pipeline = Pipeline(**config)
 
     client = docker.from_env()
-    #  client = docker.DockerClient(base_url='unix://var/run/docker.sock')
     if pipeline.compute == "awslambda":
         dockerfile = "./lambda.Dockerfile"
 
