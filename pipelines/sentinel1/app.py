@@ -1,12 +1,12 @@
 import json
 
+import stactools
 from aws_lambda_powertools.utilities.data_classes import (
-    SQSEvent,
     S3Event,
     SNSEvent,
+    SQSEvent,
     event_source,
 )
-import stactools
 
 
 @event_source(data_class=SQSEvent)

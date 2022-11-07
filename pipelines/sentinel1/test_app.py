@@ -1,6 +1,7 @@
 from unittest.mock import MagicMock
-from .app import handler
+
 from ..fixtures.events import bucket_name, key
+from .app import handler
 
 
 def test_handler(monkeypatch, sqs_event):
