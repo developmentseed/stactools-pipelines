@@ -16,7 +16,6 @@ extras_require_test = [
     *aws_cdk_extras,
     "flake8",
     "black",
-    "boto3",
     "pytest-cov",
     "pytest",
 ]
@@ -24,6 +23,7 @@ extras_require_test = [
 extras_require_dev = [
     *extras_require_test,
     "aws-lambda-powertools",
+    "boto3",
     "pydantic",
     "pyyaml",
     "docker",
