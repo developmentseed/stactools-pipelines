@@ -1,2 +1,4 @@
 aws-lambda-powertools
+jmespath
 stactools-sentinel1
+boto3

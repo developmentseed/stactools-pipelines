@@ -4,7 +4,7 @@ import aws_cdk.aws_sns_subscriptions as sns_subscriptions
 import aws_cdk.aws_sqs as sqs
 from constructs import Construct
 
-from ..models.pipeline import Pipeline
+from aws_asdi_pipelines.models.pipeline import Pipeline
 
 
 class LambdaStack(cdk.Stack):
@@ -20,7 +20,7 @@ class LambdaStack(cdk.Stack):
         self.granule_topic = sns.Topic.from_topic_arn(
             self,
             f"{stack_name}_GranuleSNS",
-            topic_arn="wat",
+            topic_arn=pipeline.sns,
         )
 
         self.granule_dlq = sqs.Queue(
@@ -39,7 +39,6 @@ class LambdaStack(cdk.Stack):
                 queue=self.granule_dlq,
             ),
         )
-
         self.sns_subscription = sns_subscriptions.SqsSubscription(
             queue=self.granule_queue,
             dead_letter_queue=self.granule_dlq,

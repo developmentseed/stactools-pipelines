@@ -7,13 +7,13 @@ import botocore
 import docker
 import yaml
 
-from models.pipeline import Pipeline
+from aws_asdi_pipelines.models.pipeline import Pipeline
 
 logging.basicConfig(level=logging.DEBUG)
 pipeline_name = os.environ["PIPELINE"]
 
 
-with open(f"./pipelines/{pipeline_name}/config.yaml") as f:
+with open(f"./aws_asdi_pipelines/pipelines/{pipeline_name}/config.yaml") as f:
     config = yaml.safe_load(f)
     pipeline = Pipeline(**config)
 
