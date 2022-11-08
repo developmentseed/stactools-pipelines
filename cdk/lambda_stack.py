@@ -4,7 +4,7 @@ import aws_cdk.aws_sns_subscriptions as sns_subscriptions
 import aws_cdk.aws_sqs as sqs
 from constructs import Construct
 
-from ...models.pipeline import Pipeline
+from ..models.pipeline import Pipeline
 
 
 class LambdaStack(cdk.Stack):
