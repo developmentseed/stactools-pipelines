@@ -2,18 +2,14 @@ from typing import List
 
 from setuptools import find_packages, setup  # type: ignore
 
-aws_cdk_version = "1.18.0"
 aws_cdk_extras = [
-    f"aws_cdk.{aws_cdk_package}=={aws_cdk_version}"
-    for aws_cdk_package in [
-        "core",
-    ]
+    "aws-cdk-lib==2.45.0",
+    "constructs>=10.0.0",
 ]
 
 install_requires: List[str] = []
 
 extras_require_test = [
-    *aws_cdk_extras,
     "flake8",
     "black",
     "pytest-cov",
@@ -22,6 +18,7 @@ extras_require_test = [
 
 extras_require_dev = [
     *extras_require_test,
+    *aws_cdk_extras,
     "aws-lambda-powertools",
     "boto3",
     "pydantic",
