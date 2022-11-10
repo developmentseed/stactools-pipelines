@@ -1,4 +1,5 @@
 default_stages: [commit]
+exclude: '.png'
 repos:
   - repo: local
     hooks:
