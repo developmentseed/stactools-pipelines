@@ -1,4 +1,8 @@
 import aws_cdk as cdk
+import aws_cdk.aws_ecr as ecr
+import aws_cdk.aws_lambda as aws_lambda
+import aws_cdk.aws_lambda_event_sources as lambda_event_sources
+import aws_cdk.aws_logs as logs
 import aws_cdk.aws_sns as sns
 import aws_cdk.aws_sns_subscriptions as sns_subscriptions
 import aws_cdk.aws_sqs as sqs
@@ -32,7 +36,7 @@ class LambdaStack(cdk.Stack):
         self.granule_queue = sqs.Queue(
             self,
             "f{stack_name}_GranuleQueue",
-            visibility_timeout=cdk.Duration.hours(12),
+            visibility_timeout=cdk.Duration.minutes(5),
             retention_period=cdk.Duration.days(14),
             dead_letter_queue=sqs.DeadLetterQueue(
                 max_receive_count=3,
@@ -41,7 +45,29 @@ class LambdaStack(cdk.Stack):
         )
         self.sns_subscription = sns_subscriptions.SqsSubscription(
             queue=self.granule_queue,
-            dead_letter_queue=self.granule_dlq,
         )
 
         self.granule_topic.add_subscription(self.sns_subscription)
+        self.repo = ecr.Repository.from_repository_name(
+            self,
+            f"{stack_name}_Repository",
+            repository_name=stack_name,
+        )
+
+        self.granule_function = aws_lambda.DockerImageFunction(
+            self,
+            f"{stack_name}-granule_function",
+            code=aws_lambda.DockerImageCode.from_ecr(
+                repository=self.repo, tag="latest"
+            ),
+            memory_size=8000,
+            timeout=cdk.Duration.minutes(15),
+            log_retention=logs.RetentionDays.ONE_WEEK,
+        )
+
+        self.granule_queue.grant_consume_messages(self.granule_function.role)
+        self.event_source = lambda_event_sources.SqsEventSource(
+            queue=self.granule_queue,
+            batch_size=1,
+        )
+        self.granule_function.add_event_source(self.event_source)
