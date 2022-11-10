@@ -1,21 +1,13 @@
 import json
 
-import stactools
-from aws_lambda_powertools.utilities.data_classes import (
-    S3Event,
-    SNSEvent,
-    SQSEvent,
-    event_source,
-)
+from aws_lambda_powertools.utilities.data_classes import SQSEvent, event_source
+from stactools.sentinel1.grd.stac import create_item
 
 
 @event_source(data_class=SQSEvent)
 def handler(event: SQSEvent, context):
     for record in event.records:
-        sns_event = SNSEvent(json.loads(record.body))
-        sns_message = sns_event.record.sns
-        s3event = S3Event(json.loads(sns_message.message))
-        s3object = s3event.record.s3.get_object
-        href = f"s3://{s3event.bucket_name}/{s3object.key}"
-        stac = stactools.sentinel1.grd.stac.create_item(granule_href=href)
-        print(stac)
+        sentinel_message = json.loads(record.body)
+        href = f"s3://sentinel-s1-l1c/{sentinel_message['path']}"
+        print(href)
+        create_item(granule_href=href)
