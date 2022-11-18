@@ -4,11 +4,8 @@ import os
 import boto3
 import yaml
 
+from aws_asdi_pipelines.athena.utils import build_create_table_query, run_query
 from aws_asdi_pipelines.models.pipeline import Pipeline
-from aws_asdi_pipelines.pipelines.athena.utils import (
-    build_create_table_query,
-    run_query,
-)
 
 logging.basicConfig(level=logging.INFO)
 pipeline_name = os.environ["PIPELINE"]
