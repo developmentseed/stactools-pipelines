@@ -4,6 +4,7 @@ import aws_cdk.aws_iam as iam
 import aws_cdk.aws_lambda as aws_lambda
 import aws_cdk.aws_lambda_event_sources as lambda_event_sources
 import aws_cdk.aws_logs as logs
+import aws_cdk.aws_s3 as s3
 import aws_cdk.aws_sns as sns
 import aws_cdk.aws_sns_subscriptions as sns_subscriptions
 import aws_cdk.aws_sqs as sqs
@@ -65,18 +66,17 @@ class LambdaStack(cdk.Stack):
             timeout=cdk.Duration.minutes(14),
             log_retention=logs.RetentionDays.ONE_WEEK,
         )
-
-        self.granule_function.role.add_to_principal_policy(
-            iam.PolicyStatement(
-                resources=[
-                    "arn:aws:s3:::*",
-                ],
-                actions=[
-                    "s3:Get*",
-                    "s3:List*",
-                ],
-            )
+        self.open_buckets_statement = iam.PolicyStatement(
+            resources=[
+                "arn:aws:s3:::*",
+            ],
+            actions=[
+                "s3:Get*",
+                "s3:List*",
+            ],
         )
+
+        self.granule_function.role.add_to_principal_policy(self.open_buckets_statement)
 
         self.granule_queue.grant_consume_messages(self.granule_function.role)
         self.event_source = lambda_event_sources.SqsEventSource(
@@ -84,3 +84,14 @@ class LambdaStack(cdk.Stack):
             batch_size=1,
         )
         self.granule_function.add_event_source(self.event_source)
+
+        if pipeline.inventory_location:
+            self.athena_results_bucket = s3.Bucket(
+                self,
+                f"{stack_name}-athena-results",
+            )
+            cdk.CfnOutput(
+                self,
+                "AthenaResultsBucket",
+                value=self.athena_results_bucket.bucket_name,
+            )

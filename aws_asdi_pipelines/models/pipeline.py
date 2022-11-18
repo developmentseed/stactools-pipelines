@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import Optional
 
 from pydantic import BaseModel
 
@@ -14,3 +15,4 @@ class Pipeline(BaseModel):
     collection: str
     compute: ComputeEnum
     sns: str
+    inventory_location: Optional[str]
