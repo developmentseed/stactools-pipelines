@@ -1,5 +1,9 @@
+from os import path
+
 import aws_cdk as cdk
 import aws_cdk.aws_ecr as ecr
+import aws_cdk.aws_events as events
+import aws_cdk.aws_events_targets as events_targets
 import aws_cdk.aws_iam as iam
 import aws_cdk.aws_lambda as aws_lambda
 import aws_cdk.aws_lambda_event_sources as lambda_event_sources
@@ -8,6 +12,7 @@ import aws_cdk.aws_s3 as s3
 import aws_cdk.aws_sns as sns
 import aws_cdk.aws_sns_subscriptions as sns_subscriptions
 import aws_cdk.aws_sqs as sqs
+import aws_cdk.aws_ssm as ssm
 from constructs import Construct
 
 from aws_asdi_pipelines.models.pipeline import Pipeline
@@ -94,4 +99,70 @@ class LambdaStack(cdk.Stack):
                 self,
                 "AthenaResultsBucket",
                 value=self.athena_results_bucket.bucket_name,
+            )
+
+            self.chunk_parameter = ssm.StringParameter(
+                self,
+                f"{stack_name}_chunk_parameter",
+                string_value=pipeline.initial_chunk,
+                parameter_name=f"{stack_name}_chunk_parameter",
+            )
+            self.process_inventory_chunk = aws_lambda.Function(
+                self,
+                f"{stack_name}-process_inventory_chunk",
+                code=aws_lambda.Code.from_asset(
+                    path.join(__file__, f"../../pipelines/{pipeline.id}")
+                ),
+                handler="historic.handler",
+                runtime=aws_lambda.Runtime.PYTHON_3_9,
+                memory_size=8000,
+                timeout=cdk.Duration.minutes(15),
+                environment={
+                    "OUTPUT_LOCATION": f"s3://{self.athena_results_bucket.bucket_name}",
+                    "DATABASE_NAME": pipeline.id,
+                    "CHUNK_PARAMETER": self.chunk_parameter.parameter_name,
+                    "QUEUE_URL": self.granule_queue.queue_url,
+                },
+            )
+            self.cron_rule = events.Rule(
+                self,
+                f"{stack_name}_cron_rule",
+                schedule=events.Schedule.rate(cdk.Duration.hours(1)),
+            )
+            self.cron_rule.add_target(
+                events_targets.LambdaFunction(self.process_inventory_chunk)
+            )
+            self.process_inventory_chunk.role.add_to_principal_policy(
+                self.open_buckets_statement
+            )
+            self.granule_queue.grant_send_messages(self.process_inventory_chunk.role)
+            self.chunk_parameter.grant_read(self.process_inventory_chunk.role)
+            self.chunk_parameter.grant_write(self.process_inventory_chunk.role)
+            self.process_inventory_chunk.add_to_role_policy(
+                iam.PolicyStatement(
+                    actions=[
+                        "athena:StartQueryExecution",
+                        "athena:GetQueryExecution",
+                        "athena:GetQueryResults",
+                        "glue:GetTable",
+                    ],
+                    resources=["*"],
+                )
+            )
+            self.process_inventory_chunk.add_to_role_policy(
+                iam.PolicyStatement(
+                    actions=[
+                        "s3:GetBucketLocation",
+                        "s3:GetObject",
+                        "s3:ListBucket",
+                        "s3:ListBucketMultipartUploads",
+                        "s3:AbortMultipartUpload",
+                        "s3:PutObject",
+                        "s3:ListMultipartUploadParts",
+                    ],
+                    resources=[
+                        self.athena_results_bucket.bucket_arn,
+                        f"{self.athena_results_bucket.bucket_arn}/*",
+                    ],
+                )
             )

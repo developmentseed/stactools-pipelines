@@ -16,3 +16,4 @@ class Pipeline(BaseModel):
     compute: ComputeEnum
     sns: str
     inventory_location: Optional[str]
+    initial_chunk: Optional[str]
