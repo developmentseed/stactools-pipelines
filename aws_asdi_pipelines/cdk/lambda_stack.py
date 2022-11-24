@@ -1,5 +1,3 @@
-from os import path
-
 import aws_cdk as cdk
 import aws_cdk.aws_ecr as ecr
 import aws_cdk.aws_events as events
@@ -71,6 +69,7 @@ class LambdaStack(cdk.Stack):
             timeout=cdk.Duration.minutes(14),
             log_retention=logs.RetentionDays.ONE_WEEK,
         )
+
         self.open_buckets_statement = iam.PolicyStatement(
             resources=[
                 "arn:aws:s3:::*",
@@ -107,16 +106,21 @@ class LambdaStack(cdk.Stack):
                 string_value=pipeline.initial_chunk,
                 parameter_name=f"{stack_name}_chunk_parameter",
             )
-            self.process_inventory_chunk = aws_lambda.Function(
+            self.repo_historic = ecr.Repository.from_repository_name(
                 self,
-                f"{stack_name}-process_inventory_chunk",
-                code=aws_lambda.Code.from_asset(
-                    path.join(__file__, f"../../pipelines/{pipeline.id}")
+                f"{stack_name}_repository_historic",
+                repository_name=f"{stack_name}-historic",
+            )
+
+            self.process_inventory_chunk = aws_lambda.DockerImageFunction(
+                self,
+                f"{stack_name}-process_chunk",
+                code=aws_lambda.DockerImageCode.from_ecr(
+                    repository=self.repo_historic, tag="latest"
                 ),
-                handler="historic.handler",
-                runtime=aws_lambda.Runtime.PYTHON_3_9,
                 memory_size=8000,
-                timeout=cdk.Duration.minutes(15),
+                timeout=cdk.Duration.minutes(14),
+                log_retention=logs.RetentionDays.ONE_WEEK,
                 environment={
                     "OUTPUT_LOCATION": f"s3://{self.athena_results_bucket.bucket_name}",
                     "DATABASE_NAME": pipeline.id,
