@@ -4,7 +4,7 @@ import os
 import boto3
 import yaml
 
-from aws_asdi_pipelines.athena.utils import build_create_table_query, run_query
+from aws_asdi_pipelines.historic.utils import build_create_table_query, run_query
 from aws_asdi_pipelines.models.pipeline import Pipeline
 
 logging.basicConfig(level=logging.INFO)
