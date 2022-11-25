@@ -13,18 +13,18 @@ logging.basicConfig(level=logging.DEBUG)
 pipeline_name = os.environ["PIPELINE"]
 
 
-with open(f"./aws_asdi_pipelines/pipelines/{pipeline_name}/config.yaml") as f:
-    config = yaml.safe_load(f)
-    pipeline = Pipeline(**config)
-
-    client = docker.from_env()
-    if pipeline.compute == "awslambda":
+def build_and_push(historic: bool, pipeline: Pipeline):
+    if historic:
+        dockerfile = "./lambda.historic.Dockerfile"
+        tag = f"{pipeline.id}-historic"
+    else:
         dockerfile = "./lambda.Dockerfile"
+        tag = pipeline.id
 
     image, build_logs = client.images.build(
         path="./",
         dockerfile=dockerfile,
-        tag=pipeline.collection,
+        tag=tag,
         buildargs={
             "pipeline": pipeline.id,
         },
@@ -36,7 +36,7 @@ with open(f"./aws_asdi_pipelines/pipelines/{pipeline_name}/config.yaml") as f:
 
     ecr_client = boto3.client("ecr")
     try:
-        response = ecr_client.create_repository(repositoryName=pipeline.id)
+        ecr_client.create_repository(repositoryName=tag)
     except botocore.exceptions.ClientError as error:
         if error.response["Error"]["Code"] == "RepositoryAlreadyExistsException":
             logging.debug("Repository already exists")
@@ -53,7 +53,19 @@ with open(f"./aws_asdi_pipelines/pipelines/{pipeline_name}/config.yaml") as f:
 
     ecr_url = ecr_credentials["proxyEndpoint"]
     client.login(username="AWS", password=ecr_password, registry=ecr_url)
-    ecr_repo_name = "{}/{}".format(ecr_url.replace("https://", ""), pipeline.id)
+    ecr_repo_name = "{}/{}".format(ecr_url.replace("https://", ""), tag)
     image.tag(ecr_repo_name, tag="latest")
     push_log = client.images.push(ecr_repo_name, tag="latest")
     logging.debug(push_log)
+
+
+with open(f"./aws_asdi_pipelines/pipelines/{pipeline_name}/config.yaml") as f:
+    config = yaml.safe_load(f)
+    pipeline = Pipeline(**config)
+
+    client = docker.from_env()
+    if pipeline.compute == "awslambda":
+        build_and_push(historic=False, pipeline=pipeline)
+
+    if pipeline.inventory_location:
+        build_and_push(historic=True, pipeline=pipeline)
