@@ -23,6 +23,12 @@ At a minimum include a
 - `app.py` A Lambda application with a `handler` function defined which consumes an `SQSEvent`.
 - `test_app.py` A `pytest` based unit test file which exercises your application.
 
+If your target bucket includes an s3 [inventory](https://docs.aws.amazon.com/AmazonS3/latest/userguide/storage-inventory.html).  You can also enable historic processing
+- Update the `config.yaml` with an `inventory_location` property.
+- Include a `historic.py` file in your pipeline which implements a `query_inventory`, `row_to_message_body` and `handler` method to query the inventory and send the chunked results to the processing queue.
+- Include a `test_historic.py` which exercies your historic processing application.
+- Update the `config.yaml` with the `initial_chunk` that will be used as the starting point for your historic processing.
+
 ### Testing a Pipeline
 Create an environment setting using your pipline name.
 ```
@@ -48,6 +54,7 @@ $ export PIPELINE=<Your pipeline name>
 With an AWS profile enabled with sufficient permissions build and push your pipeline image with
 ```
 $ python image_builder.py
+$ python athena_builder.py
 ```
 
 Deploy the infrastructure for your pipeline with
