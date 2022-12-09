@@ -7,6 +7,7 @@ import aws_cdk.aws_lambda as aws_lambda
 import aws_cdk.aws_lambda_event_sources as lambda_event_sources
 import aws_cdk.aws_logs as logs
 import aws_cdk.aws_s3 as s3
+import aws_cdk.aws_secretsmanager as secretsmanager
 import aws_cdk.aws_sns as sns
 import aws_cdk.aws_sns_subscriptions as sns_subscriptions
 import aws_cdk.aws_sqs as sqs
@@ -53,6 +54,9 @@ class LambdaStack(cdk.Stack):
         )
 
         self.granule_topic.add_subscription(self.sns_subscription)
+        self.secret = secretsmanager.Secret.from_secret_complete_arn(
+            self, f"{stack_name}_secret_new", secret_complete_arn=pipeline.secret_arn
+        )
         self.repo = ecr.Repository.from_repository_name(
             self,
             f"{stack_name}_Repository",
@@ -68,6 +72,19 @@ class LambdaStack(cdk.Stack):
             memory_size=8000,
             timeout=cdk.Duration.minutes(14),
             log_retention=logs.RetentionDays.ONE_WEEK,
+            environment={
+                "CLIENT_SECRET": self.secret.secret_value_from_json(
+                    "client_secret"
+                ).to_string(),
+                "CLIENT_ID": self.secret.secret_value_from_json(
+                    "client_id"
+                ).to_string(),
+                "DOMAIN": self.secret.secret_value_from_json(
+                    "cognito_domain"
+                ).to_string(),
+                "SCOPE": self.secret.secret_value_from_json("scope").to_string(),
+                "INGESTOR_URL": pipeline.ingestor_url,
+            },
         )
 
         self.open_buckets_statement = iam.PolicyStatement(
@@ -77,6 +94,7 @@ class LambdaStack(cdk.Stack):
             actions=[
                 "s3:Get*",
                 "s3:List*",
+                "s3:ListBucket",
             ],
         )
 

@@ -15,5 +15,7 @@ class Pipeline(BaseModel):
     collection: str
     compute: ComputeEnum
     sns: str
+    secret_arn: str
+    ingestor_url: str
     inventory_location: Optional[str]
     initial_chunk: Optional[str]
