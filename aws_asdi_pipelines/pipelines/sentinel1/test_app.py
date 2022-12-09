@@ -1,4 +1,5 @@
 import json
+import os
 from unittest.mock import patch
 
 import pytest
@@ -46,12 +47,38 @@ def sqs_sentinel1_event():
     return sqs_message
 
 
+domain = "domain"
+client_secret = "client_secret"
+client_id = "client_id"
+scope = "scope"
+ingestor_url = "ingestor_url"
+
+
+@patch.dict(os.environ, {"DOMAIN": domain})
+@patch.dict(os.environ, {"CLIENT_SECRET": client_secret})
+@patch.dict(os.environ, {"CLIENT_ID": client_id})
+@patch.dict(os.environ, {"SCOPE": scope})
+@patch.dict(os.environ, {"INGESTOR_URL": ingestor_url})
+@patch("aws_asdi_pipelines.pipelines.sentinel1.app.requests")
+@patch("aws_asdi_pipelines.pipelines.sentinel1.app.get_token")
 @patch("aws_asdi_pipelines.pipelines.sentinel1.app.create_item")
-def test_handler(create_item, sqs_sentinel1_event):
+def test_handler(create_item, get_token, requests, sqs_sentinel1_event):
+    token = "token"
+    item = {"id": "id"}
+    create_item.return_value.to_dict.return_value = item
+    get_token.return_value = token
     handler(sqs_sentinel1_event, {})
+    get_token.assert_called_once_with(
+        domain=domain, client_secret=client_secret, client_id=client_id, scope=scope
+    )
     path = json.loads(sns_message["Message"])["path"]
     create_item.assert_called_once_with(
         granule_href=f"s3://sentinel-s1-l1c/{path}",
         archive_format=Format.COG,
         requester_pays=True,
+    )
+    requests.post.assert_called_once_with(
+        url=ingestor_url,
+        data=json.dumps(item),
+        headers={"Authorization": f"bearer {token}"},
     )
