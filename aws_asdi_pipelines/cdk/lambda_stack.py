@@ -83,6 +83,7 @@ class LambdaStack(cdk.Stack):
                     "cognito_domain"
                 ).to_string(),
                 "SCOPE": self.secret.secret_value_from_json("scope").to_string(),
+                "INGESTOR_URL": pipeline.ingestor_url,
             },
         )
 

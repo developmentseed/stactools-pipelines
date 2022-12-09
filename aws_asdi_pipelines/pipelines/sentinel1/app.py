@@ -30,6 +30,7 @@ def handler(event: SQSEvent, context):
         stac = create_item(
             granule_href=href, archive_format=Format.COG, requester_pays=True
         )
+        stac.collection_id = "sentinel1-grd"
         response = requests.post(
             url=ingestor_url, data=json.dumps(stac.to_dict()), headers=headers
         )
