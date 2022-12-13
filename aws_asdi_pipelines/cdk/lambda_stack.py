@@ -12,6 +12,7 @@ import aws_cdk.aws_sns as sns
 import aws_cdk.aws_sns_subscriptions as sns_subscriptions
 import aws_cdk.aws_sqs as sqs
 import aws_cdk.aws_ssm as ssm
+import aws_cdk.custom_resources as custom_resources
 from constructs import Construct
 
 from aws_asdi_pipelines.models.pipeline import Pipeline
@@ -146,14 +147,46 @@ class LambdaStack(cdk.Stack):
                     "QUEUE_URL": self.granule_queue.queue_url,
                 },
             )
-            self.cron_rule = events.Rule(
-                self,
-                f"{stack_name}_cron_rule",
-                schedule=events.Schedule.rate(cdk.Duration.hours(1)),
-            )
-            self.cron_rule.add_target(
-                events_targets.LambdaFunction(self.process_inventory_chunk)
-            )
+
+            if pipeline.historic_frequency == 0:
+                custom_resources.AwsCustomResource(
+                    scope=self,
+                    id="invoke_lambda",
+                    policy=(
+                        custom_resources.AwsCustomResourcePolicy.from_statements(
+                            statements=[
+                                iam.PolicyStatement(
+                                    actions=["lambda:InvokeFunction"],
+                                    effect=iam.Effect.ALLOW,
+                                    resources=[
+                                        self.process_inventory_chunk.function_arn
+                                    ],
+                                )
+                            ]
+                        )
+                    ),
+                    timeout=cdk.Duration.minutes(15),
+                    on_create=custom_resources.AwsSdkCall(
+                        service="Lambda",
+                        action="invoke",
+                        parameters={
+                            "FunctionName": self.process_inventory_chunk.function_name,
+                            "InvocationType": "Event",
+                        },
+                        physical_resource_id=custom_resources.PhysicalResourceId.of(
+                            "JobSenderTriggerPhysicalId"
+                        ),
+                    ),
+                )
+            else:
+                self.cron_rule = events.Rule(
+                    self,
+                    f"{stack_name}_cron_rule",
+                    schedule=events.Schedule.rate(cdk.Duration.hours(1)),
+                )
+                self.cron_rule.add_target(
+                    events_targets.LambdaFunction(self.process_inventory_chunk)
+                )
             self.process_inventory_chunk.role.add_to_principal_policy(
                 self.open_buckets_statement
             )
