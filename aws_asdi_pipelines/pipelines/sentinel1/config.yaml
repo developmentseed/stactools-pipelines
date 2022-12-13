@@ -8,3 +8,4 @@
   ingestor_url: "https://crtx3178aa.execute-api.us-west-2.amazonaws.com/dev/ingestions"
   inventory_location: "s3://sentinel-inventory/sentinel-s1-l1c/sentinel-s1-l1c-inventory/hive/dt=2022-11-16-01-00/"
   initial_chunk: "2022-4-20"
+  historic_frequency: 1
