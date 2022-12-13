@@ -25,7 +25,10 @@ def handler(event: SQSEvent, context):
         record_body = record["body"]
         path = f"s3://copernicus-dem-30m/{record_body}"
         print(path)
-        stac = create_item(href=path)
+        stac = create_item(
+            href=path,
+            host="AWS"
+        )
         stac.collection_id = "cop-dem-glo-30"
 
         response = requests.post(
