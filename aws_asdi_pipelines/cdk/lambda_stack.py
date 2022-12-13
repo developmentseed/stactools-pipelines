@@ -182,7 +182,9 @@ class LambdaStack(cdk.Stack):
                 self.cron_rule = events.Rule(
                     self,
                     f"{stack_name}_cron_rule",
-                    schedule=events.Schedule.rate(cdk.Duration.hours(1)),
+                    schedule=events.Schedule.rate(
+                        cdk.Duration.hours(pipeline.historic_frequency)
+                    ),
                 )
                 self.cron_rule.add_target(
                     events_targets.LambdaFunction(self.process_inventory_chunk)
