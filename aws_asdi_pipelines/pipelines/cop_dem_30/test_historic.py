@@ -40,5 +40,6 @@ def test_handler(boto3, run_query):
     run_query.assert_called_once_with(athena_client, output_location, pipeline, query)
 
     sqs_client.send_message.assert_called_once_with(
-        QueueUrl=queue_url, MessageBody='{"Message": "{\\"path\\": \\"Copernicus_DSM_COG_10_N80_00_W104_00_DEM\\"}"}'
+        QueueUrl=queue_url,
+        MessageBody='{"Message": "{\\"path\\": \\"Copernicus_DSM_COG_10_N80_00_W104_00_DEM\\"}"}',
     )

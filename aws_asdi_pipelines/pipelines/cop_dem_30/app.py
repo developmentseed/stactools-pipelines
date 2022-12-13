@@ -3,8 +3,8 @@ import os
 
 import requests
 from aws_lambda_powertools.utilities.data_classes import SQSEvent, event_source
-from stactools.core import use_fsspec
 from stactools.cop_dem.stac import create_item
+from stactools.core import use_fsspec
 
 from aws_asdi_pipelines.cognito.utils import get_token
 
@@ -25,10 +25,7 @@ def handler(event: SQSEvent, context):
         record_body = record["body"]
         path = f"s3://copernicus-dem-30m/{record_body}"
         print(path)
-        stac = create_item(
-            href=path,
-            host="AWS"
-        )
+        stac = create_item(href=path, host="AWS")
         stac.collection_id = "cop-dem-glo-30"
 
         response = requests.post(
