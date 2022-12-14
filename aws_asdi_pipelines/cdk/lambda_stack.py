@@ -145,6 +145,7 @@ class LambdaStack(cdk.Stack):
                     "DATABASE_NAME": pipeline.id,
                     "CHUNK_PARAMETER": self.chunk_parameter.parameter_name,
                     "QUEUE_URL": self.granule_queue.queue_url,
+                    "INVENTORY_LOCATION": pipeline.inventory_location,
                 },
             )
 
