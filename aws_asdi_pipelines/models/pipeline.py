@@ -14,9 +14,9 @@ class Pipeline(BaseModel):
     arco: bool
     collection: str
     compute: ComputeEnum
-    sns: str
     secret_arn: str
     ingestor_url: str
+    sns: Optional[str]
     inventory_location: Optional[str]
     initial_chunk: Optional[str]
     historic_frequency: Optional[int]

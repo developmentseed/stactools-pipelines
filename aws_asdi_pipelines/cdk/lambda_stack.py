@@ -27,13 +27,6 @@ class LambdaStack(cdk.Stack):
         **kwargs,
     ) -> None:
         super().__init__(scope, stack_name)
-
-        self.granule_topic = sns.Topic.from_topic_arn(
-            self,
-            f"{stack_name}_GranuleSNS",
-            topic_arn=pipeline.sns,
-        )
-
         self.granule_dlq = sqs.Queue(
             self,
             f"{stack_name}_GranuleDLQ",
@@ -50,11 +43,17 @@ class LambdaStack(cdk.Stack):
                 queue=self.granule_dlq,
             ),
         )
-        self.sns_subscription = sns_subscriptions.SqsSubscription(
-            queue=self.granule_queue,
-        )
+        if pipeline.sns:
+            self.granule_topic = sns.Topic.from_topic_arn(
+                self,
+                f"{stack_name}_GranuleSNS",
+                topic_arn=pipeline.sns,
+            )
+            self.sns_subscription = sns_subscriptions.SqsSubscription(
+                queue=self.granule_queue,
+            )
+            self.granule_topic.add_subscription(self.sns_subscription)
 
-        self.granule_topic.add_subscription(self.sns_subscription)
         self.secret = secretsmanager.Secret.from_secret_complete_arn(
             self, f"{stack_name}_secret_new", secret_complete_arn=pipeline.secret_arn
         )
@@ -118,13 +117,13 @@ class LambdaStack(cdk.Stack):
                 "AthenaResultsBucket",
                 value=self.athena_results_bucket.bucket_name,
             )
-
-            self.chunk_parameter = ssm.StringParameter(
-                self,
-                f"{stack_name}_chunk_parameter",
-                string_value=pipeline.initial_chunk,
-                parameter_name=f"{stack_name}_chunk_parameter",
-            )
+            if pipeline.initial_chunk:
+                self.chunk_parameter = ssm.StringParameter(
+                    self,
+                    f"{stack_name}_chunk_parameter",
+                    string_value=pipeline.initial_chunk,
+                    parameter_name=f"{stack_name}_chunk_parameter",
+                )
             self.repo_historic = ecr.Repository.from_repository_name(
                 self,
                 f"{stack_name}_repository_historic",
@@ -143,7 +142,11 @@ class LambdaStack(cdk.Stack):
                 environment={
                     "OUTPUT_LOCATION": f"s3://{self.athena_results_bucket.bucket_name}",
                     "DATABASE_NAME": pipeline.id,
-                    "CHUNK_PARAMETER": self.chunk_parameter.parameter_name,
+                    "CHUNK_PARAMETER": (
+                        self.chunk_parameter.parameter_name
+                        if hasattr(self, "chunk_parameter")
+                        else "None"
+                    ),
                     "QUEUE_URL": self.granule_queue.queue_url,
                     "INVENTORY_LOCATION": pipeline.inventory_location,
                 },
@@ -194,8 +197,10 @@ class LambdaStack(cdk.Stack):
                 self.open_buckets_statement
             )
             self.granule_queue.grant_send_messages(self.process_inventory_chunk.role)
-            self.chunk_parameter.grant_read(self.process_inventory_chunk.role)
-            self.chunk_parameter.grant_write(self.process_inventory_chunk.role)
+            if pipeline.initial_chunk:
+                self.chunk_parameter.grant_read(self.process_inventory_chunk.role)
+                self.chunk_parameter.grant_write(self.process_inventory_chunk.role)
+
             self.process_inventory_chunk.add_to_role_policy(
                 iam.PolicyStatement(
                     actions=[
