@@ -70,7 +70,7 @@ class LambdaStack(cdk.Stack):
             code=aws_lambda.DockerImageCode.from_ecr(
                 repository=self.repo, tag="latest"
             ),
-            memory_size=8000,
+            memory_size=1000,
             timeout=cdk.Duration.minutes(14),
             log_retention=logs.RetentionDays.ONE_WEEK,
             environment={
@@ -137,7 +137,7 @@ class LambdaStack(cdk.Stack):
                 code=aws_lambda.DockerImageCode.from_ecr(
                     repository=self.repo_historic, tag="latest"
                 ),
-                memory_size=8000,
+                memory_size=1000,
                 timeout=cdk.Duration.minutes(14),
                 log_retention=logs.RetentionDays.ONE_WEEK,
                 environment={
