@@ -1,0 +1,5 @@
+aws-lambda-powertools
+jmespath
+git+https://github.com/developmentseed/cop-dem.git@feat/collection
+s3fs
+boto3
