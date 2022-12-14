@@ -1,33 +1,35 @@
-import json
 import os
-from typing import Dict, Optional
 
 import boto3
+import yaml
 
-from aws_asdi_pipelines.historic.utils import queue_results, run_query
-
-
-def query_inventory(athena_client) -> str:
-    OUTPUT_LOCATION = os.environ["OUTPUT_LOCATION"]
-    query = "SELECT key FROM cop_dem_30.inventory"
-    query_id = run_query(athena_client, OUTPUT_LOCATION, "cop_dem_30", query)
-    return query_id
+from aws_asdi_pipelines.models.pipeline import Pipeline
 
 
-def row_to_message_body(row: Dict) -> Optional[str]:
-    manifest = row["Data"][0]["VarCharValue"]
-    path = os.path.dirname(manifest)
-    if path == "":
-        body = None
-    else:
-        message = json.dumps({"path": path})
-        body = json.dumps({"Message": message})
-    return body
+def pipeline_config() -> str:
+    PIPELINE_NAME = os.environ["PIPELINE"]
+    with open(f"./aws_asdi_pipelines/pipelines/{PIPELINE_NAME}/config.yaml") as f:
+        config = yaml.safe_load(f)
+        pipeline = Pipeline(**config)
+
+        return pipeline.inventory_location
+
+
+def inventory_data(inventory: str) -> list:
+    inventory = inventory.split("/", 3)
+    s3_client = boto3.client("s3")
+    response = s3_client.get_object(Bucket=inventory[2], Key=inventory[3])
+    data = response["Body"].read().decode("utf-8").splitlines()
+
+    return data
 
 
 def handler(event, context):
     QUEUE_URL = os.environ["QUEUE_URL"]
-    athena_client = boto3.client("athena")
-    query_id = query_inventory(athena_client)
-    sqs_client = boto3.client("sqs")
-    queue_results(athena_client, query_id, sqs_client, row_to_message_body, QUEUE_URL)
+    inventory_location = pipeline_config()
+    print(inventory_location)
+    if inventory_location:
+        keys = inventory_data(inventory_location)
+        sqs_client = boto3.client("sqs")
+        for key in keys:
+            sqs_client.send_message(QueueUrl=QUEUE_URL, MessageBody=key)

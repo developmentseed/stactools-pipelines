@@ -59,7 +59,7 @@ def test_handler(create_item, get_token, requests, sqs_cop_dem_30_event):
     path = sqs_cop_dem_30_event["Records"][0]["body"]
     print(path)
     create_item.assert_called_once_with(
-        href=f"s3://copernicus-dem-30m/{path}",
+        href=f"s3://copernicus-dem-30m/{path}", host="AWS"
     )
     requests.post.assert_called_once_with(
         url=ingestor_url,
