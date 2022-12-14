@@ -35,7 +35,7 @@ class LambdaStack(cdk.Stack):
 
         self.granule_queue = sqs.Queue(
             self,
-            "f{stack_name}_GranuleQueue",
+            f"{stack_name}_GranuleQueue",
             visibility_timeout=cdk.Duration.minutes(15),
             retention_period=cdk.Duration.days(14),
             dead_letter_queue=sqs.DeadLetterQueue(
