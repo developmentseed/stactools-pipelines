@@ -1,5 +1,5 @@
 ---
-  id: "cop-dem-30"
+  id: "cop_dem_30"
   arco: False
   collection: "cop-dem-glo-30"
   compute: "awslambda"
