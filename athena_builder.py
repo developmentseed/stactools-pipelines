@@ -27,18 +27,6 @@ with open(f"./aws_asdi_pipelines/pipelines/{pipeline_name}/config.yaml") as f:
 
         creation_location = f"s3://{results_location}/creation/"
         create_database = f"create database {pipeline_name}"
-        run_query(
-            athena_client,
-            creation_location,
-            pipeline_name,
-            create_database,
-            creation_location,
-        )
+        run_query(athena_client, creation_location, pipeline_name, create_database)
         create_table = build_create_table_query(pipeline.inventory_location)
-        run_query(
-            athena_client,
-            creation_location,
-            pipeline_name,
-            create_table,
-            creation_location,
-        )
+        run_query(athena_client, creation_location, pipeline_name, create_table)
