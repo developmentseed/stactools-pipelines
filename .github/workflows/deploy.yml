@@ -1,0 +1,67 @@
+name: Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      PROJECT:
+        description: The project name for resource cost tracking
+        required: true
+        default: aws-asdi
+      PIPELINE:
+        description: Pipeline name
+        required: true
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  PROJECT: ${{ github.event.inputs.PROJECT }}
+  PIPELINE: ${{ github.event.inputs.PIPELINE }}
+
+jobs:
+  tox:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: 16
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+
+      - name: Install Dependencies
+        run: |
+          pip install -U pip
+          pip install tox
+          pip install -e ".[dev]"
+
+      - name: Tox Test
+        run: tox
+
+      - name: NPM installs
+        run: npm install -g aws-cdk@2.45.0
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: ${{ secrets.ASSUME_ROLE }}
+          aws-region: us-west-2
+
+      - name: Build Image
+        run: python image_builder.py
+
+      - name: Deploy Stack
+        run: cdk deploy --require-approval=never
+
+      - name: Build Athena
+        run: python athena_builder.py
+
+      # - name: Push Collection
+      #   run:

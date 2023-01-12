@@ -20,7 +20,7 @@ def build_and_push(historic: bool, pipeline: Pipeline):
     else:
         dockerfile = "./lambda.Dockerfile"
         tag = pipeline.id
-
+    tag = tag.replace("_", "-")
     image, build_logs = client.images.build(
         path="./",
         dockerfile=dockerfile,
