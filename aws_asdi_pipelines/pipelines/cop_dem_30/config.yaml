@@ -1,6 +1,5 @@
 ---
   id: "cop_dem_30"
-  arco: False
   collection: "cop-dem-glo-30"
   compute: "awslambda"
   secret_arn: "arn:aws:secretsmanager:eu-central-1:751953039297:secret:asdi-auth-stack-alukach/asdi-workflows-6awSos"

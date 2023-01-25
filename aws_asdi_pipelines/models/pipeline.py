@@ -11,7 +11,6 @@ class ComputeEnum(str, Enum):
 
 class Pipeline(BaseModel):
     id: str
-    arco: bool
     collection: str
     compute: ComputeEnum
     secret_arn: str
