@@ -11,10 +11,10 @@ class ComputeEnum(str, Enum):
 
 class Pipeline(BaseModel):
     id: str
-    collection: str
     compute: ComputeEnum
     secret_arn: str
     ingestor_url: str
+    queue: bool
     sns: Optional[str]
     inventory_location: Optional[str]
     initial_chunk: Optional[str]

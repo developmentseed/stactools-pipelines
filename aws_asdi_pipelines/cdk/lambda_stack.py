@@ -27,22 +27,76 @@ class LambdaStack(cdk.Stack):
         **kwargs,
     ) -> None:
         super().__init__(scope, stack_name)
-        self.granule_dlq = sqs.Queue(
-            self,
-            f"{stack_name}_GranuleDLQ",
-            retention_period=cdk.Duration.days(14),
-        )
+        if pipeline.queue:
+            self.granule_dlq = sqs.Queue(
+                self,
+                f"{stack_name}_GranuleDLQ",
+                retention_period=cdk.Duration.days(14),
+            )
 
-        self.granule_queue = sqs.Queue(
-            self,
-            f"{stack_name}_GranuleQueue",
-            visibility_timeout=cdk.Duration.minutes(15),
-            retention_period=cdk.Duration.days(14),
-            dead_letter_queue=sqs.DeadLetterQueue(
-                max_receive_count=3,
-                queue=self.granule_dlq,
-            ),
-        )
+            self.granule_queue = sqs.Queue(
+                self,
+                f"{stack_name}_GranuleQueue",
+                visibility_timeout=cdk.Duration.minutes(15),
+                retention_period=cdk.Duration.days(14),
+                dead_letter_queue=sqs.DeadLetterQueue(
+                    max_receive_count=3,
+                    queue=self.granule_dlq,
+                ),
+            )
+        else:
+            self.stac_function = aws_lambda.DockerImageFunction(
+                self,
+                f"{stack_name}-stac_function",
+                code=aws_lambda.DockerImageCode.from_ecr(
+                    repository=self.repo, tag="latest"
+                ),
+                memory_size=1000,
+                timeout=cdk.Duration.minutes(14),
+                log_retention=logs.RetentionDays.ONE_WEEK,
+                environment={
+                    "CLIENT_SECRET": self.secret.secret_value_from_json(
+                        "client_secret"
+                    ).to_string(),
+                    "CLIENT_ID": self.secret.secret_value_from_json(
+                        "client_id"
+                    ).to_string(),
+                    "DOMAIN": self.secret.secret_value_from_json(
+                        "cognito_domain"
+                    ).to_string(),
+                    "SCOPE": self.secret.secret_value_from_json("scope").to_string(),
+                    "INGESTOR_URL": pipeline.ingestor_url,
+                },
+            )
+
+            custom_resources.AwsCustomResource(
+                scope=self,
+                id="invoke_lambda",
+                policy=(
+                    custom_resources.AwsCustomResourcePolicy.from_statements(
+                        statements=[
+                            iam.PolicyStatement(
+                                actions=["lambda:InvokeFunction"],
+                                effect=iam.Effect.ALLOW,
+                                resources=[self.stac_function.function_arn],
+                            )
+                        ]
+                    )
+                ),
+                timeout=cdk.Duration.minutes(15),
+                on_create=custom_resources.AwsSdkCall(
+                    service="Lambda",
+                    action="invoke",
+                    parameters={
+                        "FunctionName": self.stac_function.function_name,
+                        "InvocationType": "Event",
+                    },
+                    physical_resource_id=custom_resources.PhysicalResourceId.of(
+                        "JobSenderTriggerPhysicalId"
+                    ),
+                ),
+            )
+
         if pipeline.sns:
             self.granule_topic = sns.Topic.from_topic_arn(
                 self,
