@@ -70,7 +70,7 @@ class LambdaStack(cdk.Stack):
         )
         self.granule_function.role.add_to_principal_policy(self.open_buckets_statement)
 
-        if pipeline.queue:
+        if pipeline.sns or pipeline.inventory_location:
             self.granule_dlq = sqs.Queue(
                 self,
                 f"{stack_name}_GranuleDLQ",
