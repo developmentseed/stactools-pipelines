@@ -7,9 +7,10 @@ from aws_asdi_pipelines.cdk.lambda_stack import LambdaStack
 from aws_asdi_pipelines.models.pipeline import Pipeline
 
 # Required environment variables
-stack_name = os.environ["PIPELINE"].replace("_", "-")
+pipeline = os.environ["PIPELINE"]
+stack_name = pipeline.replace("_", "-")
 
-with open(f"./aws_asdi_pipelines/pipelines/{stack_name}/config.yaml") as f:
+with open(f"./aws_asdi_pipelines/pipelines/{pipeline}/config.yaml") as f:
     config = yaml.safe_load(f)
     pipeline = Pipeline(**config)
 

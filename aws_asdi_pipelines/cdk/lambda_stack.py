@@ -27,96 +27,14 @@ class LambdaStack(cdk.Stack):
         **kwargs,
     ) -> None:
         super().__init__(scope, stack_name)
-        if pipeline.queue:
-            self.granule_dlq = sqs.Queue(
-                self,
-                f"{stack_name}_GranuleDLQ",
-                retention_period=cdk.Duration.days(14),
-            )
-
-            self.granule_queue = sqs.Queue(
-                self,
-                f"{stack_name}_GranuleQueue",
-                visibility_timeout=cdk.Duration.minutes(15),
-                retention_period=cdk.Duration.days(14),
-                dead_letter_queue=sqs.DeadLetterQueue(
-                    max_receive_count=3,
-                    queue=self.granule_dlq,
-                ),
-            )
-        else:
-            self.stac_function = aws_lambda.DockerImageFunction(
-                self,
-                f"{stack_name}-stac_function",
-                code=aws_lambda.DockerImageCode.from_ecr(
-                    repository=self.repo, tag="latest"
-                ),
-                memory_size=1000,
-                timeout=cdk.Duration.minutes(14),
-                log_retention=logs.RetentionDays.ONE_WEEK,
-                environment={
-                    "CLIENT_SECRET": self.secret.secret_value_from_json(
-                        "client_secret"
-                    ).to_string(),
-                    "CLIENT_ID": self.secret.secret_value_from_json(
-                        "client_id"
-                    ).to_string(),
-                    "DOMAIN": self.secret.secret_value_from_json(
-                        "cognito_domain"
-                    ).to_string(),
-                    "SCOPE": self.secret.secret_value_from_json("scope").to_string(),
-                    "INGESTOR_URL": pipeline.ingestor_url,
-                },
-            )
-
-            custom_resources.AwsCustomResource(
-                scope=self,
-                id="invoke_lambda",
-                policy=(
-                    custom_resources.AwsCustomResourcePolicy.from_statements(
-                        statements=[
-                            iam.PolicyStatement(
-                                actions=["lambda:InvokeFunction"],
-                                effect=iam.Effect.ALLOW,
-                                resources=[self.stac_function.function_arn],
-                            )
-                        ]
-                    )
-                ),
-                timeout=cdk.Duration.minutes(15),
-                on_create=custom_resources.AwsSdkCall(
-                    service="Lambda",
-                    action="invoke",
-                    parameters={
-                        "FunctionName": self.stac_function.function_name,
-                        "InvocationType": "Event",
-                    },
-                    physical_resource_id=custom_resources.PhysicalResourceId.of(
-                        "JobSenderTriggerPhysicalId"
-                    ),
-                ),
-            )
-
-        if pipeline.sns:
-            self.granule_topic = sns.Topic.from_topic_arn(
-                self,
-                f"{stack_name}_GranuleSNS",
-                topic_arn=pipeline.sns,
-            )
-            self.sns_subscription = sns_subscriptions.SqsSubscription(
-                queue=self.granule_queue,
-            )
-            self.granule_topic.add_subscription(self.sns_subscription)
-
         self.secret = secretsmanager.Secret.from_secret_complete_arn(
-            self, f"{stack_name}_secret_new", secret_complete_arn=pipeline.secret_arn
+            self, f"{pipeline.id}_secret_new", secret_complete_arn=pipeline.secret_arn
         )
         self.repo = ecr.Repository.from_repository_name(
             self,
             f"{stack_name}_Repository",
-            repository_name=stack_name,
+            repository_name=pipeline.id,
         )
-
         self.granule_function = aws_lambda.DockerImageFunction(
             self,
             f"{stack_name}-granule_function",
@@ -140,7 +58,6 @@ class LambdaStack(cdk.Stack):
                 "INGESTOR_URL": pipeline.ingestor_url,
             },
         )
-
         self.open_buckets_statement = iam.PolicyStatement(
             resources=[
                 "arn:aws:s3:::*",
@@ -151,15 +68,69 @@ class LambdaStack(cdk.Stack):
                 "s3:ListBucket",
             ],
         )
-
         self.granule_function.role.add_to_principal_policy(self.open_buckets_statement)
 
-        self.granule_queue.grant_consume_messages(self.granule_function.role)
-        self.event_source = lambda_event_sources.SqsEventSource(
-            queue=self.granule_queue,
-            batch_size=1,
-        )
-        self.granule_function.add_event_source(self.event_source)
+        if pipeline.queue:
+            self.granule_dlq = sqs.Queue(
+                self,
+                f"{stack_name}_GranuleDLQ",
+                retention_period=cdk.Duration.days(14),
+            )
+            self.granule_queue = sqs.Queue(
+                self,
+                f"{stack_name}_GranuleQueue",
+                visibility_timeout=cdk.Duration.minutes(15),
+                retention_period=cdk.Duration.days(14),
+                dead_letter_queue=sqs.DeadLetterQueue(
+                    max_receive_count=3,
+                    queue=self.granule_dlq,
+                ),
+            )
+            self.granule_queue.grant_consume_messages(self.granule_function.role)
+            self.event_source = lambda_event_sources.SqsEventSource(
+                queue=self.granule_queue,
+                batch_size=1,
+            )
+            self.granule_function.add_event_source(self.event_source)
+        else:
+            custom_resources.AwsCustomResource(
+                scope=self,
+                id="invoke_lambda",
+                policy=(
+                    custom_resources.AwsCustomResourcePolicy.from_statements(
+                        statements=[
+                            iam.PolicyStatement(
+                                actions=["lambda:InvokeFunction"],
+                                effect=iam.Effect.ALLOW,
+                                resources=[self.granule_function.function_arn],
+                            )
+                        ]
+                    )
+                ),
+                timeout=cdk.Duration.minutes(15),
+                on_create=custom_resources.AwsSdkCall(
+                    service="Lambda",
+                    action="invoke",
+                    parameters={
+                        "FunctionName": self.granule_function.function_name,
+                        "InvocationType": "Event",
+                    },
+                    physical_resource_id=custom_resources.PhysicalResourceId.of(
+                        "JobSenderTriggerPhysicalId"
+                    ),
+                ),
+            )
+
+        if pipeline.sns:
+            self.granule_topic = sns.Topic.from_topic_arn(
+                self,
+                f"{stack_name}_GranuleSNS",
+                topic_arn=pipeline.sns,
+            )
+            self.sns_subscription = sns_subscriptions.SqsSubscription(
+                queue=self.granule_queue,
+            )
+            self.granule_topic.add_subscription(self.sns_subscription)
 
         if pipeline.inventory_location:
             self.athena_results_bucket = s3.Bucket(
