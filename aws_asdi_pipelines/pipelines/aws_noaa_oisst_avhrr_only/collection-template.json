@@ -21,6 +21,7 @@
     }
   ],
   "stac_extensions": [
+    "https://stac-extensions.github.io/item-assets/v1.0.0/schema.json",
     "https://stac-extensions.github.io/xarray-assets/v1.0.0/schema.json",
     "https://stac-extensions.github.io/scientific/v1.0.0/schema.json"
   ],
@@ -49,6 +50,21 @@
       "url": "https://www.ncei.noaa.gov/products/climate-data-records/sea-surface-temperature-optimum-interpolation"
     }
   ],
+  "item_assets": {
+    "zarr-https": {
+      "title": "aws-noaa-oisst-avhrr-only HTTPS Zarr root",
+      "description": "HTTPS URI of the aws-noaa-oisst-avhrr-only Zarr Group on OSN.",
+      "roles": [
+        "data",
+        "zarr",
+        "https"
+      ],
+      "type": "application/vnd+zarr",
+      "xarray:open_kwargs": {
+        "consolidated": true
+      }
+    }
+  },
   "assets": {
     "zarr-https": {
       "href": "https://ncsa.osn.xsede.org/Pangeo/pangeo-forge/pangeo-forge/aws-noaa-oisst-feedstock/aws-noaa-oisst-avhrr-only.zarr/reference.json",

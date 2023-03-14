@@ -1,5 +1,6 @@
 import json
 import os
+from urllib.parse import urljoin
 
 import fsspec
 import pystac
@@ -10,7 +11,7 @@ import xstac
 from aws_asdi_pipelines.cognito.utils import get_token
 
 
-def create_stac(collection: bool):
+def create_stac(collection: bool) -> pystac.STACObject:
     if collection:
         template_type = "collection-template.json"
     else:
@@ -42,6 +43,15 @@ def create_stac(collection: bool):
     return stac
 
 
+def post_ingestor(stac: pystac.STACObject, url: str, headers):
+    response = requests.post(url=url, data=json.dumps(stac.to_dict()), headers=headers)
+    try:
+        response.raise_for_status()
+    except Exception:
+        print(response.text)
+        raise
+
+
 def handler(event, context):
     domain = os.environ["DOMAIN"]
     client_secret = os.environ["CLIENT_SECRET"]
@@ -52,13 +62,8 @@ def handler(event, context):
         domain=domain, client_secret=client_secret, client_id=client_id, scope=scope
     )
     headers = {"Authorization": f"bearer {token}"}
+    collection = create_stac(collection=True)
+    post_ingestor(collection, urljoin(ingestor_url, "collections"), headers)
     item = create_stac(collection=False)
-    item.collection_id = "aws-noaa-oisst-avhrr-only"
-    response = requests.post(
-        url=ingestor_url, data=json.dumps(item.to_dict()), headers=headers
-    )
-    try:
-        response.raise_for_status()
-    except Exception:
-        print(response.text)
-        raise
+    item.collection_id = collection.id
+    post_ingestor(item, urljoin(ingestor_url, "ingestions"), headers)
