@@ -23,11 +23,24 @@ At a minimum include a
 - `app.py` A Lambda application with a `handler` function defined which consumes an `SQSEvent`.
 - `test_app.py` A `pytest` based unit test file which exercises your application.
 
-If your target bucket includes an s3 [inventory](https://docs.aws.amazon.com/AmazonS3/latest/userguide/storage-inventory.html).  You can also enable historic processing
-- Update the `config.yaml` with an `inventory_location` property.
-- Include a `historic.py` file in your pipeline which implements a `query_inventory`, `row_to_message_body` and `handler` method to query the inventory and send the chunked results to the processing queue.
-- Include a `test_historic.py` which exercies your historic processing application.
-- Update the `config.yaml` with the `initial_chunk` that will be used as the starting point for your historic processing.
+### config.yaml structure
+- `id` **Required** The pipeline name.  This should be the same as the pipeline's parent folder and should use `_`s for separators to support Python module discovery.
+
+- `compute` **Required** Currently only the `awslambda` value is supported.
+
+- `ingestor_url` **Required** The ingestor API's root path with the stage value included.
+
+- `secret_arn` **Required** The secret manager ARN for using a Cognito JWKS implementation with the ingestor API.
+
+- `queue` **Required** A boolean value `true` or `false` denoting if the pipeline requires a queue for ingesting multiple records. In the `kerchunk` example, only a single record is created so a queue is not necessary.
+
+- `sns` **Optional** The SNS topic to listen to for new granule notifications.
+
+- `inventory_location` **Optional** The location of an S3 invetory or file listing that can be used by the `pipeline` to process and ingest existing granules.  Include a `historic.py` file (and a `test_historic.py`) in your pipeline which implements a `query_inventory`, `row_to_message_body` and `handler` method to query the inventory and send the results to the processing queue.
+
+- `historic_frequency` **Optional** If an `inventory_location` is included the `historic_frequency` (how often in hours the `historic.py` is run) must also be included.  A value of `0` indicates that the `historic.py` function will run a single time on deployment and process the entire inventory. If a value of > `0` is specified then an `initial_chunk` must also be specified.  The pipeline will build a stack which uses these values to incrementally chunk through the inventory file with `cron` executions to process until the entire inventory has been processed.
+
+
 
 ### Testing a Pipeline
 Create an environment setting using your pipline name.
