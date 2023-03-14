@@ -1,0 +1,6 @@
+---
+  id: "aws_noaa_oisst_avhrr_only"
+  compute: "awslambda"
+  secret_arn: "arn:aws:secretsmanager:eu-central-1:751953039297:secret:asdi-auth-stack-alukach/asdi-workflows-6awSos"
+  ingestor_url: "https://crtx3178aa.execute-api.us-west-2.amazonaws.com/dev"
+  queue: false

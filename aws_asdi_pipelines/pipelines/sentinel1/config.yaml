@@ -1,11 +1,10 @@
 ---
   id: "sentinel1"
-  arco: False
-  collection: "sentinel1"
   compute: "awslambda"
-  sns: "arn:aws:sns:eu-central-1:214830741341:SentinelS1L1C"
   secret_arn: "arn:aws:secretsmanager:eu-central-1:751953039297:secret:asdi-auth-stack-alukach/asdi-workflows-6awSos"
   ingestor_url: "https://crtx3178aa.execute-api.us-west-2.amazonaws.com/dev/ingestions"
+  queue: true
+  sns: "arn:aws:sns:eu-central-1:214830741341:SentinelS1L1C"
   inventory_location: "s3://sentinel-inventory/sentinel-s1-l1c/sentinel-s1-l1c-inventory/hive/dt=2022-11-16-01-00/"
   initial_chunk: "2022-4-20"
   historic_frequency: 1

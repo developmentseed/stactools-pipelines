@@ -1,9 +1,8 @@
 ---
   id: "cop_dem_30"
-  arco: False
-  collection: "cop-dem-glo-30"
   compute: "awslambda"
   secret_arn: "arn:aws:secretsmanager:eu-central-1:751953039297:secret:asdi-auth-stack-alukach/asdi-workflows-6awSos"
   ingestor_url: "https://crtx3178aa.execute-api.us-west-2.amazonaws.com/dev/ingestions"
+  queue: true
   inventory_location: "s3://asdi-athena-testing-eu-central-1/inventories/copernicus-dem-30m.csv"
   historic_frequency: 0
