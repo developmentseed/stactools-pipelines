@@ -32,8 +32,6 @@ At a minimum include a
 
 - `secret_arn` **Required** The secret manager ARN for using a Cognito JWKS implementation with the ingestor API.
 
-- `queue` **Required** A boolean value `true` or `false` denoting if the pipeline requires a queue for ingesting multiple records. In the `kerchunk` example, only a single record is created so a queue is not necessary.
-
 - `sns` **Optional** The SNS topic to listen to for new granule notifications.
 
 - `inventory_location` **Optional** The location of an S3 invetory or file listing that can be used by the `pipeline` to process and ingest existing granules.  Include a `historic.py` file (and a `test_historic.py`) in your pipeline which implements a `query_inventory`, `row_to_message_body` and `handler` method to query the inventory and send the results to the processing queue.
