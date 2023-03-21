@@ -1,0 +1,5 @@
+aws-lambda-powertools
+jmespath
+git+https://github.com/stactools-packages/noaa-cdr.git
+s3fs
+boto3
