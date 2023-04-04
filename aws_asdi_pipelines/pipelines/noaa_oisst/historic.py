@@ -9,7 +9,7 @@ from aws_asdi_pipelines.historic.utils import queue_results, run_query
 
 def query_inventory(athena_client) -> str:
     OUTPUT_LOCATION = os.environ["OUTPUT_LOCATION"]
-    query = "SELECT key FROM noaa_oisst.inventory"
+    query = "SELECT key FROM noaa_oisst.inventory where key LIKE 'data/v2.1/avhrr%'"
     query_id = run_query(athena_client, OUTPUT_LOCATION, "noaa_oisst", query)
     return query_id
 

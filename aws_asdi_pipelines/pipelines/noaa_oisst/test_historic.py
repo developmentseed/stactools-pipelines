@@ -26,7 +26,7 @@ def test_handler(boto3, run_query):
     boto3.client = MagicMock(side_effect=side_effect)
     query_id = "id"
     run_query.return_value = query_id
-    query = "SELECT key FROM noaa_oisst.inventory"
+    query = "SELECT key FROM noaa_oisst.inventory where key LIKE 'data/v2.1/avhrr%'"
 
     query_value = "/test/oisst-avhrr-v02r01.19810901.nc"
     page = {"ResultSet": {"Rows": [{"Data": [{"VarCharValue": query_value}]}]}}
