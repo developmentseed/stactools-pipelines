@@ -17,4 +17,3 @@ __pycache__/
 # Support for Project snippet scope
 !.vscode/*.code-snippets
 *.vim
-
