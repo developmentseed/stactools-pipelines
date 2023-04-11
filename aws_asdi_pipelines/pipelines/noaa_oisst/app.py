@@ -24,16 +24,18 @@ def handler(event: SQSEvent, context):
     for record in event.records:
         record_body = json.loads(record.body)
         record_message = json.loads(record_body["Message"])
-        path = f"s3://noaa-cdr-sea-surface-temp-optimum-interpolation-pds/{record_message['path']}"
-        print(path)
-        stac = create_item(href=path)
+        for sns_record in record_message["Records"]:
+            key = sns_record["s3"]["object"]["key"]
+            path = f"s3://noaa-cdr-sea-surface-temp-optimum-interpolation-pds/{key}"
+            print(path)
+            stac = create_item(href=path)
 
-        stac.collection_id = "noaa-oisst"
-        response = requests.post(
-            url=ingestor_url, data=json.dumps(stac.to_dict()), headers=headers
-        )
-        try:
-            response.raise_for_status()
-        except Exception:
-            print(response.text)
-            raise
+            stac.collection_id = "noaa-oisst"
+            response = requests.post(
+                url=ingestor_url, data=json.dumps(stac.to_dict()), headers=headers
+            )
+            try:
+                response.raise_for_status()
+            except Exception:
+                print(response.text)
+                raise
