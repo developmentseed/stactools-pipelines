@@ -20,7 +20,7 @@ def row_to_message_body(row: Dict) -> Optional[str]:
     if path == "":
         body = None
     else:
-        message = json.dumps({"path": path})
+        message = json.dumps({"Records": [{"s3": {"object": {"key": path}}}]})
         body = json.dumps({"Message": message})
     return body
 

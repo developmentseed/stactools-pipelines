@@ -39,5 +39,6 @@ def test_handler(boto3, run_query):
     run_query.assert_called_once_with(athena_client, output_location, pipeline, query)
 
     sqs_client.send_message.assert_called_once_with(
-        QueueUrl=queue_url, MessageBody='{"Message": "{\\"path\\": \\"/test\\"}"}'
+        QueueUrl=queue_url,
+        MessageBody='{"Message": "{\\"Records\\": [{\\"s3\\": {\\"object\\": {\\"key\\": \\"/test\\"}}}]}"}',
     )
