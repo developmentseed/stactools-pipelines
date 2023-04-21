@@ -1,15 +1,11 @@
 import aws_cdk as cdk
-import aws_cdk.aws_ecr as ecr
-import aws_cdk.aws_iam as iam
-import aws_cdk.aws_lambda as aws_lambda
-import aws_cdk.aws_logs as logs
-import aws_cdk.aws_secretsmanager as secretsmanager
 import aws_cdk.aws_sns as sns
 import aws_cdk.aws_sns_subscriptions as sns_subscriptions
 from constructs import Construct
 
 from aws_asdi_pipelines.cdk.inventory import Inventory
 from aws_asdi_pipelines.cdk.invoke_function import InvokeFunction
+from aws_asdi_pipelines.cdk.pipeline_function import PipelineFunction
 from aws_asdi_pipelines.cdk.queue import Queue
 from aws_asdi_pipelines.models.pipeline import Pipeline
 
@@ -23,60 +19,35 @@ class LambdaStack(cdk.Stack):
         **kwargs,
     ) -> None:
         super().__init__(scope, stack_name)
-        self.secret = secretsmanager.Secret.from_secret_complete_arn(
-            self, f"{pipeline.id}_secret_new", secret_complete_arn=pipeline.secret_arn
-        )
-        self.repo = ecr.Repository.from_repository_name(
+        self.collection_function = PipelineFunction(
             self,
-            f"{stack_name}_Repository",
-            repository_name=pipeline.id,
+            f"{stack_name}-collection_function",
+            pipeline,
+            collection=True,
         )
-        self.granule_function = aws_lambda.DockerImageFunction(
+        self.invoke_collection_function = InvokeFunction(
+            self,
+            id=f"{stack_name}-invoke-collection_function",
+            function=self.collection_function.function,
+        )
+
+        self.granule_function = PipelineFunction(
             self,
             f"{stack_name}-granule_function",
-            code=aws_lambda.DockerImageCode.from_ecr(
-                repository=self.repo, tag="latest"
-            ),
-            memory_size=1000,
-            timeout=cdk.Duration.minutes(14),
-            log_retention=logs.RetentionDays.ONE_WEEK,
-            environment={
-                "CLIENT_SECRET": self.secret.secret_value_from_json(
-                    "client_secret"
-                ).to_string(),
-                "CLIENT_ID": self.secret.secret_value_from_json(
-                    "client_id"
-                ).to_string(),
-                "DOMAIN": self.secret.secret_value_from_json(
-                    "cognito_domain"
-                ).to_string(),
-                "SCOPE": self.secret.secret_value_from_json("scope").to_string(),
-                "INGESTOR_URL": pipeline.ingestor_url,
-            },
+            pipeline,
         )
-        self.open_buckets_statement = iam.PolicyStatement(
-            resources=[
-                "arn:aws:s3:::*",
-            ],
-            actions=[
-                "s3:Get*",
-                "s3:List*",
-                "s3:ListBucket",
-            ],
-        )
-        self.granule_function.role.add_to_principal_policy(self.open_buckets_statement)
 
         if pipeline.sns or pipeline.inventory_location:
             self.queue = Queue(
                 self,
                 "f{stack_name}-queue",
-                function=self.granule_function,
+                function=self.granule_function.function,
             )
         else:
             self.invoke_granule_function = InvokeFunction(
                 self,
                 id=f"{stack_name}-invoke-granule_function",
-                function=self.granule_function,
+                function=self.granule_function.function,
             )
 
         if pipeline.sns:
