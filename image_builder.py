@@ -13,20 +13,13 @@ logging.basicConfig(level=logging.DEBUG)
 pipeline_name = os.environ["PIPELINE"]
 
 
-def build_and_push(historic: bool, pipeline: Pipeline):
-    if historic:
-        dockerfile = "./lambda.historic.Dockerfile"
-        tag = f"{pipeline.id}-historic"
-    else:
-        dockerfile = "./lambda.Dockerfile"
-        tag = pipeline.id
-
+def build_and_push(dockerfile: str, tag: str, pipeline_id: str):
     image, build_logs = client.images.build(
         path="./",
         dockerfile=dockerfile,
         tag=tag,
         buildargs={
-            "pipeline": pipeline.id,
+            "pipeline": pipeline_id,
         },
     )
     for chunk in build_logs:
@@ -65,7 +58,15 @@ with open(f"./aws_asdi_pipelines/pipelines/{pipeline_name}/config.yaml") as f:
 
     client = docker.from_env()
     if pipeline.compute == "awslambda":
-        build_and_push(historic=False, pipeline=pipeline)
+        dockerfile = "./lambda.collection.Dockerfile"
+        tag = f"{pipeline.id}-collection"
+        build_and_push(dockerfile, tag, pipeline.id)
+
+        dockerfile = "./lambda.Dockerfile"
+        tag = pipeline.id
+        build_and_push(dockerfile, tag, pipeline.id)
 
     if pipeline.inventory_location:
-        build_and_push(historic=True, pipeline=pipeline)
+        dockerfile = "./lambda.historic.Dockerfile"
+        tag = f"{pipeline.id}-historic"
+        build_and_push(dockerfile, tag, pipeline.id)
