@@ -1,4 +1,6 @@
 # AWS-ASDI-Pipelines
+AWS-ASDI-Pipelines is a large scale, turnkey processing framework to create STAC metadata and cloud optimized formats for data stored on S3 using [stactools packages](https://github.com/stactools-packages).
+
 
 ![Alt text](/docs/aws_asdi_cog.png)
 
@@ -20,8 +22,10 @@ To develop a new pipeline, create a directory in [pipelines](aws_asdi_pipelines/
 At a minimum include a
 - `requirements.txt` With your application's dependencies.
 - `config.yaml` Your pipeline's configuration settings.
-- `app.py` A Lambda application with a `handler` function defined which consumes an `SQSEvent`.
-- `test_app.py` A `pytest` based unit test file which exercises your application.
+- `app.py` A Lambda application with a `handler` function defined which consumes an `SQSEvent` creates a STAC Item and posts it to the `ingestor`.
+- `test_app.py` A `pytest` based unit test file which exercises `app.py`.
+- `collection.py` A Lambda application with a `handler` function which creates a STAC Collection and posts it to the `ingestor`.
+- `test_collection.py` A `pytest` based unit test file which exercises `collection.py`.
 
 ### config.yaml structure
 - `id` **Required** The pipeline name.  This should be the same as the pipeline's parent folder and should use `_`s for separators to support Python module discovery.
@@ -34,7 +38,7 @@ At a minimum include a
 
 - `sns` **Optional** The SNS topic to listen to for new granule notifications.
 
-- `inventory_location` **Optional** The location of an S3 invetory or file listing that can be used by the `pipeline` to process and ingest existing granules.  Include a `historic.py` file (and a `test_historic.py`) in your pipeline which implements a `query_inventory`, `row_to_message_body` and `handler` method to query the inventory and send the results to the processing queue.
+- `inventory_location` **Optional** The location of an S3 inventory or file listing that can be used by the `pipeline` to process and ingest existing granules.  Include a `historic.py` file (and a `test_historic.py`) in your pipeline which implements a `query_inventory`, `row_to_message_body` and `handler` method to query the inventory and send the results to the processing queue.
 
 - `historic_frequency` **Optional** If an `inventory_location` is included the `historic_frequency` (how often in hours the `historic.py` is run) must also be included.  A value of `0` indicates that the `historic.py` function will run a single time on deployment and process the entire inventory. If a value of > `0` is specified then an `initial_chunk` must also be specified.  The pipeline will build a stack which uses these values to incrementally chunk through the inventory file with `cron` executions to process until the entire inventory has been processed.
 
@@ -65,7 +69,6 @@ $ export PIPELINE=<Your pipeline name>
 With an AWS profile enabled with sufficient permissions build and push your pipeline image with
 ```
 $ python image_builder.py
-$ python athena_builder.py
 ```
 
 Deploy the infrastructure for your pipeline with
