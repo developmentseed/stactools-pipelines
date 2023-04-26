@@ -10,7 +10,7 @@ class InvokeFunction(Construct):
         self,
         scope: Construct,
         id: str,
-        function: aws_lambda.DockerImageFunction,
+        function: aws_lambda.Function,
         *,
         prefix=None,
     ) -> None:

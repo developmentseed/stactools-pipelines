@@ -21,8 +21,8 @@ class LambdaStack(cdk.Stack):
         super().__init__(scope, stack_name)
         self.collection_function = PipelineFunction(
             self,
-            f"{stack_name}-collection_function",
-            pipeline,
+            id=f"{stack_name}-collection_function",
+            pipeline=pipeline,
             collection=True,
         )
         self.invoke_collection_function = InvokeFunction(
@@ -33,14 +33,14 @@ class LambdaStack(cdk.Stack):
 
         self.granule_function = PipelineFunction(
             self,
-            f"{stack_name}-granule_function",
-            pipeline,
+            id=f"{stack_name}-granule_function",
+            pipeline=pipeline,
         )
 
         if pipeline.sns or pipeline.inventory_location:
             self.queue = Queue(
                 self,
-                "f{stack_name}-queue",
+                id=f"{stack_name}-queue",
                 function=self.granule_function.function,
             )
         else:
