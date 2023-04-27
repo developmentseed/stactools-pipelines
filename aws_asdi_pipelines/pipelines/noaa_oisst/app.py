@@ -14,23 +14,18 @@ from aws_asdi_pipelines.cognito.utils import get_token
 
 @event_source(data_class=SQSEvent)
 def handler(event: SQSEvent, context):
-    domain = os.environ["DOMAIN"]
-    client_secret = os.environ["CLIENT_SECRET"]
-    client_id = os.environ["CLIENT_ID"]
-    scope = os.environ["SCOPE"]
     ingestor_url = os.environ["INGESTOR_URL"]
     ingestions_endpoint = f"{ingestor_url.strip('/')}/ingestions"
-    token = get_token(
-        domain=domain, client_secret=client_secret, client_id=client_id, scope=scope
-    )
+    token = get_token()
     headers = {"Authorization": f"bearer {token}"}
     use_fsspec()
     for record in event.records:
         record_body = json.loads(record.body)
         record_message = json.loads(record_body["Message"])
         for sns_record in record_message["Records"]:
+            bucket = sns_record["s3"]["bucket"]["name"]
             key = sns_record["s3"]["object"]["key"]
-            path = f"s3://noaa-cdr-sea-surface-temp-optimum-interpolation-pds/{key.lstrip('/')}"
+            path = f"s3://{bucket}/{key.lstrip('/')}"
             print(path)
             stac = create_item(href=path)
 

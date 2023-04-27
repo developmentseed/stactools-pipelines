@@ -1,5 +1,6 @@
 aws-lambda-powertools
 jmespath
-git+https://github.com/sharkinsspatial/sentinel1.git@kwargs_patch
+rasterio
+stactools-sentinel1
 s3fs
 boto3
