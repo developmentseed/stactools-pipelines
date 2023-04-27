@@ -7,9 +7,10 @@ domain = "domain"
 client_secret = "client_secret"
 client_id = "client_id"
 scope = "scope"
-ingestor_url = "ingestor_url"
+ingestor_url = "https://ingestor_url"
 token = "token"
 item = {"id": "id"}
+collection = {"id": "id"}
 output_location = "s3://output_location"
 queue_url = "queue_url"
 query_id = "id"
@@ -88,12 +89,22 @@ def get_token(pipeline_id, module):
 
 
 @pytest.fixture()
-def create_item(pipeline_id, module):
+def create_item(pipeline_id):
     with patch(
-        f"aws_asdi_pipelines.pipelines.{pipeline_id}.{module}.create_item",
+        f"aws_asdi_pipelines.pipelines.{pipeline_id}.app.create_item",
         autospec=True,
     ) as m:
         m.return_value.to_dict.return_value = item
+        yield m
+
+
+@pytest.fixture()
+def create_collection(pipeline_id):
+    with patch(
+        f"aws_asdi_pipelines.pipelines.{pipeline_id}.collection.create_collection",
+        autospec=True,
+    ) as m:
+        m.return_value.to_dict.return_value = collection
         yield m
 
 
