@@ -1,38 +1,36 @@
-import os
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
+import pytest
+
+import aws_asdi_pipelines.pipelines.conftest as conftest
 from aws_asdi_pipelines.pipelines.cop_dem_30.historic import handler
 
-queue_url = "queue_url"
 inventory_location = "inventory_location"
-key = "key"
-
-s3_client = MagicMock()
-sqs_client = MagicMock()
+key = "Copernicus_DSM_COG_10_N80_00_W104_00_DEM/Copernicus_DSM_COG_10_N80_00_W104_00_DEM.tif"
 
 
-def side_effect(client_type: str) -> MagicMock:
-    print(client_type)
-    if client_type == "s3":
-        return s3_client
-    if client_type == "sqs":
-        return sqs_client
+@pytest.fixture
+def mock_cop_dem_30_env(monkeypatch):
+    monkeypatch.setenv("INVENTORY_LOCATION", inventory_location)
 
 
-@patch.dict(os.environ, {"QUEUE_URL": queue_url})
-@patch.dict(os.environ, {"INVENTORY_LOCATION": inventory_location})
-@patch(
-    "aws_asdi_pipelines.pipelines.cop_dem_30.historic.inventory_data",
-    return_value=[key],
-)
-@patch("aws_asdi_pipelines.pipelines.cop_dem_30.historic.boto3")
-def test_handler(boto3, inventory_data):
-    boto3.client = MagicMock(side_effect=side_effect)
+@pytest.fixture()
+def inventory_data():
+    with patch(
+        "aws_asdi_pipelines.pipelines.cop_dem_30.historic.inventory_data",
+        autospec=True,
+    ) as m:
+        m.return_value = [key]
+        yield m
 
+
+@pytest.mark.parametrize("pipeline_id", ["cop_dem_30"])
+@pytest.mark.parametrize("query_value", [""])
+def test_handler(mock_env, mock_cop_dem_30_env, inventory_data, boto3):
     handler({}, {})
     inventory_data.assert_called_once_with(inventory_location)
 
-    sqs_client.send_message.assert_called_once_with(
-        QueueUrl=queue_url,
+    conftest.sqs_client.send_message.assert_called_once_with(
+        QueueUrl=conftest.queue_url,
         MessageBody=key,
     )

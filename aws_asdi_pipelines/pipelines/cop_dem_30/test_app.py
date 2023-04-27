@@ -1,10 +1,11 @@
 import json
-import os
-from unittest.mock import patch
 
 import pytest
 
+import aws_asdi_pipelines.pipelines.conftest as conftest
 from aws_asdi_pipelines.pipelines.cop_dem_30.app import handler
+
+key = "Copernicus_DSM_COG_10_N80_00_W104_00_DEM/Copernicus_DSM_COG_10_N80_00_W104_00_DEM.tif"
 
 
 @pytest.fixture()
@@ -14,7 +15,7 @@ def sqs_cop_dem_30_event():
             {
                 "messageId": "059f36b4-87a3-44ab-83d2-661975830a7d",
                 "receiptHandle": "AQEBwJnKyrHigUMZj6rYigCgxlaS3SLy0a...",
-                "body": "Copernicus_DSM_COG_10_N80_00_W104_00_DEM/Copernicus_DSM_COG_10_N80_00_W104_00_DEM.tif",
+                "body": key,
                 "attributes": {
                     "ApproximateReceiveCount": "1",
                     "SentTimestamp": "1545082649183",
@@ -32,37 +33,16 @@ def sqs_cop_dem_30_event():
     return sqs_message
 
 
-domain = "domain"
-client_secret = "client_secret"
-client_id = "client_id"
-scope = "scope"
-ingestor_url = "ingestor_url"
-
-
-@patch.dict(os.environ, {"DOMAIN": domain})
-@patch.dict(os.environ, {"CLIENT_SECRET": client_secret})
-@patch.dict(os.environ, {"CLIENT_ID": client_id})
-@patch.dict(os.environ, {"SCOPE": scope})
-@patch.dict(os.environ, {"INGESTOR_URL": ingestor_url})
-@patch("aws_asdi_pipelines.pipelines.cop_dem_30.app.requests")
-@patch("aws_asdi_pipelines.pipelines.cop_dem_30.app.get_token")
-@patch("aws_asdi_pipelines.pipelines.cop_dem_30.app.create_item")
-def test_handler(create_item, get_token, requests, sqs_cop_dem_30_event):
-    token = "token"
-    item = {"id": "id"}
-    create_item.return_value.to_dict.return_value = item
-    get_token.return_value = token
+@pytest.mark.parametrize("pipeline_id", ["cop_dem_30"])
+@pytest.mark.parametrize("module", ["app"])
+def test_handler(mock_env, get_token, create_item, requests, sqs_cop_dem_30_event):
     handler(sqs_cop_dem_30_event, {})
-    get_token.assert_called_once_with(
-        domain=domain, client_secret=client_secret, client_id=client_id, scope=scope
-    )
-    path = sqs_cop_dem_30_event["Records"][0]["body"]
-    print(path)
+    get_token.assert_called_once()
     create_item.assert_called_once_with(
-        href=f"s3://copernicus-dem-30m/{path}", host="AWS"
+        href=f"s3://copernicus-dem-30m/{key}", host="AWS"
     )
     requests.post.assert_called_once_with(
-        url=ingestor_url,
-        data=json.dumps(item),
-        headers={"Authorization": f"bearer {token}"},
+        url=conftest.ingestor_url,
+        data=json.dumps(conftest.item),
+        headers={"Authorization": f"bearer {conftest.token}"},
     )
