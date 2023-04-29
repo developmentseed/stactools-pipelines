@@ -144,3 +144,22 @@ def boto3(pipeline_id, query_value):
         paginator.paginate.return_value = iter((page,))
         athena_client.get_paginator.return_value = paginator
         yield m
+
+
+@pytest.fixture
+def get_current_chunk(pipeline_id, chunk_value):
+    with patch(
+        f"aws_asdi_pipelines.pipelines.{pipeline_id}.historic.get_current_chunk",
+        return_value=chunk_value,
+        autospec=True,
+    ) as m:
+        yield m
+
+
+@pytest.fixture
+def set_current_chunk(pipeline_id):
+    with patch(
+        f"aws_asdi_pipelines.pipelines.{pipeline_id}.historic.set_current_chunk",
+        autospec=True,
+    ) as m:
+        yield m
