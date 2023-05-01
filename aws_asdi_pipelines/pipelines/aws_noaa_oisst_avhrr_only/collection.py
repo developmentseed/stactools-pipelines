@@ -1,6 +1,5 @@
 import json
 import os
-from urllib.parse import urljoin
 
 import fsspec
 import pystac
@@ -51,7 +50,8 @@ def post_ingestor(stac: pystac.STACObject, url: str, headers):
 
 def handler(event, context):
     ingestor_url = os.environ["INGESTOR_URL"]
+    collections_endpoint = f"{ingestor_url.strip('/')}/collections"
     token = get_token()
     headers = {"Authorization": f"bearer {token}"}
     collection = create_collection()
-    post_ingestor(collection, urljoin(ingestor_url, "collections"), headers)
+    post_ingestor(collection, collections_endpoint, headers)
