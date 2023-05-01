@@ -31,7 +31,7 @@ def test_handler(mock_env, sns_message, sqs_event, get_token, create_item, reque
         requester_pays=True,
     )
     requests.post.assert_called_once_with(
-        url=conftest.ingestor_url,
+        url=f"{conftest.ingestor_url}/ingestions",
         data=json.dumps(conftest.item),
         headers={"Authorization": f"bearer {conftest.token}"},
     )

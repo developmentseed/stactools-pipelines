@@ -1,6 +1,5 @@
 import json
 import os
-from urllib.parse import urljoin
 
 import fsspec
 import pystac
@@ -51,8 +50,9 @@ def post_ingestor(stac: pystac.STACObject, url: str, headers):
 
 def handler(event, context):
     ingestor_url = os.environ["INGESTOR_URL"]
+    ingestions_endpoint = f"{ingestor_url.strip('/')}/ingestions"
     token = get_token()
     headers = {"Authorization": f"bearer {token}"}
     item = create_item()
     item.collection_id = "aws-noaa-oisst-avhrr-only"
-    post_ingestor(item, urljoin(ingestor_url, "ingestions"), headers)
+    post_ingestor(item, ingestions_endpoint, headers)

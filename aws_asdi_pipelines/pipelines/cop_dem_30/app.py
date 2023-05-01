@@ -12,6 +12,7 @@ from aws_asdi_pipelines.cognito.utils import get_token
 @event_source(data_class=SQSEvent)
 def handler(event: SQSEvent, context):
     ingestor_url = os.environ["INGESTOR_URL"]
+    ingestions_endpoint = f"{ingestor_url.strip('/')}/ingestions"
     token = get_token()
     headers = {"Authorization": f"bearer {token}"}
     use_fsspec()
@@ -23,7 +24,7 @@ def handler(event: SQSEvent, context):
         stac.collection_id = "cop-dem-glo-30"
 
         response = requests.post(
-            url=ingestor_url, data=json.dumps(stac.to_dict()), headers=headers
+            url=ingestions_endpoint, data=json.dumps(stac.to_dict()), headers=headers
         )
         try:
             response.raise_for_status()
