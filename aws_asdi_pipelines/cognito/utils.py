@@ -1,7 +1,13 @@
+import os
+
 import requests
 
 
-def get_token(domain: str, client_secret: str, client_id: str, scope: str) -> str:
+def get_token() -> str:
+    domain = os.environ["DOMAIN"]
+    client_secret = os.environ["CLIENT_SECRET"]
+    client_id = os.environ["CLIENT_ID"]
+    scope = os.environ["SCOPE"]
     response = requests.post(
         f"{domain}/oauth2/token",
         headers={
