@@ -11,8 +11,8 @@ import xstac
 from aws_asdi_pipelines.cognito.utils import get_token
 
 
-def create_item() -> pystac.STACObject:
-    template_type = "item-template.json"
+def create_collection() -> pystac.STACObject:
+    template_type = "collection-template.json"
     template_file = os.path.join(os.path.dirname(__file__), template_type)
     template = json.load(open(template_file))
 
@@ -53,6 +53,5 @@ def handler(event, context):
     ingestor_url = os.environ["INGESTOR_URL"]
     token = get_token()
     headers = {"Authorization": f"bearer {token}"}
-    item = create_item()
-    item.collection_id = "aws-noaa-oisst-avhrr-only"
-    post_ingestor(item, urljoin(ingestor_url, "ingestions"), headers)
+    collection = create_collection()
+    post_ingestor(collection, urljoin(ingestor_url, "collections"), headers)
