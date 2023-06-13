@@ -9,7 +9,7 @@ AWS-ASDI-Pipelines is a large scale, turnkey processing framework to create STAC
 - Python>=3.9
 - Docker
 - tox
-- aws-cli
+- awscli
 - An IAM role with sufficient permissions for creating, destroying and modifying the relevant stack resources.
 
 
@@ -61,7 +61,7 @@ Create a development virtual environment with
 $ tox -e dev
 $ source devenv/bin/activate
 ```
-Create environment settigns for your pipeline deployment
+Create environment settings for your pipeline deployment
 ```
 $ export PROJECT=<The project name for resource cost tracking>
 $ export PIPELINE=<Your pipeline name>

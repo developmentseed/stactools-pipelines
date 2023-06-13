@@ -179,3 +179,7 @@ cython_debug/
 *.vim
 
 # End of https://www.toptal.com/developers/gitignore/api/visualstudiocode
+
+## Emacs environment
+*~
+.dir-locals.el
