@@ -28,7 +28,7 @@ At a minimum include a
 - `test_collection.py` A `pytest` based unit test file which exercises `collection.py`.
 
 ### config.yaml structure
-- `id` **Required** The pipeline name.  This should be the same as the pipeline's parent folder and should use `_`s for separators to support Python module discovery.
+- `id` **Required** The pipeline name. This should be the same as the pipeline's parent folder and should use `_`s for separators to support Python module discovery.
 
 - `compute` **Required** Currently only the `awslambda` value is supported.
 
