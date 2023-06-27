@@ -3,6 +3,7 @@
 import json
 import os
 import re
+from typing import List
 
 import requests
 from aws_lambda_powertools.utilities.data_classes import SQSEvent, event_source
@@ -12,7 +13,7 @@ from stactools.core import use_fsspec
 from aws_asdi_pipelines.cognito.utils import get_token
 
 
-def xml_key_from_quicklook_key(key: str) -> str:
+def xml_key_from_quicklook_key(key: str) -> List[str]:
     """
     Parse quicklook key and return key to INPE's metadata.
 
@@ -20,7 +21,7 @@ def xml_key_from_quicklook_key(key: str) -> str:
         key: quicklook key
 
     Returns:
-       key to INPE's Amazonia XML
+       keys to INPE's Amazonia XML
     """
 
     match = re.search(
@@ -37,19 +38,12 @@ def xml_key_from_quicklook_key(key: str) -> str:
         "scene_id": match.group("scene_id"),
         "collection": match.group("satellite") + match.group("camera"),
     }
-    metadata_key = (
-        "%s/%s/%s/%s/%s/%s_BAND%s.xml"  # pylint: disable=consider-using-f-string
-        % (
-            qdict["satellite"],
-            qdict["camera"],
-            qdict["path"],
-            qdict["row"],
-            qdict["scene_id"],
-            qdict["scene_id"],
-            2,
-        )
-    )
-    return metadata_key
+    metadata_key = f"{qdict['satellite']}/{qdict['camera']}/{qdict['path']}/"\
+        f"{qdict['row']}/{qdict['scene_id']}/{qdict['scene_id']}_BAND2.xml"
+    keys = []
+    for optics in ["", "_LEFT", "_RIGHT"]:
+        keys.append(re.sub(r"_L(\d+)_", f"_L\\g<1>{optics}_", metadata_key))
+    return keys
 
 
 @event_source(data_class=SQSEvent)  # pylint: disable=no-value-for-parameter
@@ -58,7 +52,6 @@ def handler(event: SQSEvent,
     """Lambda entrypoint."""
     ingestor_url = os.environ["INGESTOR_URL"]
     ingestions_endpoint = f"{ingestor_url.strip('/')}/ingestions"
-    headers = {"Authorization": f"bearer {get_token()}"}
     use_fsspec()
     for record in event.records:
         record_body = json.loads(record.body)
@@ -66,13 +59,23 @@ def handler(event: SQSEvent,
         for rec in amazonia_message["Records"]:
             bucket = rec["s3"]["bucket"]["name"]
             png_key = rec["s3"]["object"]["key"]
-            xml_key = xml_key_from_quicklook_key(png_key)
-            href = f"s3://{bucket}/{xml_key}"
-            print(href)
-            stac = create_item(asset_href=href)
+            xml_keys = xml_key_from_quicklook_key(png_key)
+            stac = None
+            for xml_key in xml_keys:
+                try:
+                    href = f"s3://{bucket}/{xml_key}"
+                    print(f"Trying {href}")
+                    stac = create_item(asset_href=href)
+                    # Stop on first option found
+                    break
+                except FileNotFoundError:
+                    # Try next option for XML filename
+                    pass
+            assert stac is not None, f"XML metadata not found for {png_key}."
             stac.collection_id = "AMAZONIA1-WFI"
             response = requests.post(
-                url=ingestions_endpoint, data=json.dumps(stac.to_dict()), headers=headers
+                url=ingestions_endpoint, data=json.dumps(stac.to_dict()),
+                headers={"Authorization": f"bearer {get_token()}"}
             )
             try:
                 response.raise_for_status()

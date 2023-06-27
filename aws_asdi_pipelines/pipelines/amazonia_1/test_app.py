@@ -18,9 +18,17 @@ def test_xml_key_from_quicklook_key():
     # Amazonia1 case
 
     xml_key = xml_key_from_quicklook_key(key=KEY)
-    assert xml_key == "AMAZONIA1/WFI/035/020/"\
-        "AMAZONIA_1_WFI_20220814_035_020_L4/"\
-        "AMAZONIA_1_WFI_20220814_035_020_L4_BAND2.xml"
+    assert xml_key == [
+        "AMAZONIA1/WFI/035/020/"
+        "AMAZONIA_1_WFI_20220814_035_020_L4/"
+        "AMAZONIA_1_WFI_20220814_035_020_L4_BAND2.xml",
+        "AMAZONIA1/WFI/035/020/"
+        "AMAZONIA_1_WFI_20220814_035_020_L4/"
+        "AMAZONIA_1_WFI_20220814_035_020_L4_LEFT_BAND2.xml",
+        "AMAZONIA1/WFI/035/020/"
+        "AMAZONIA_1_WFI_20220814_035_020_L4/"
+        "AMAZONIA_1_WFI_20220814_035_020_L4_RIGHT_BAND2.xml"
+    ]
 
 
 @pytest.mark.parametrize("pipeline_id", ["amazonia_1"])
