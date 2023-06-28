@@ -1,0 +1,9 @@
+---
+  id: "amazonia_1"
+  compute: "awslambda"
+  secret_arn: "arn:aws:secretsmanager:eu-central-1:751953039297:secret:asdi-auth-stack-alukach/asdi-workflows-6awSos"
+  ingestor_url: "https://crtx3178aa.execute-api.us-west-2.amazonaws.com/dev"
+  sns: "arn:aws:sns:us-east-1:599544552497:NewAMQuicklook"
+  # inventory_location: ""
+  # historic_frequency: 1
+  # initial_chunk: ""

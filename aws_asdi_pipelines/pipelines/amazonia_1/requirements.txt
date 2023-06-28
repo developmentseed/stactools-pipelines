@@ -1,0 +1,4 @@
+aws-lambda-powertools
+jmespath
+stactools-amazonia-1 >= 0.1.2
+s3fs

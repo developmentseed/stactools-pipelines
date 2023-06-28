@@ -9,7 +9,7 @@ AWS-ASDI-Pipelines is a large scale, turnkey processing framework to create STAC
 - Python>=3.9
 - Docker
 - tox
-- aws-cli
+- awscli
 - An IAM role with sufficient permissions for creating, destroying and modifying the relevant stack resources.
 
 
@@ -28,7 +28,7 @@ At a minimum include a
 - `test_collection.py` A `pytest` based unit test file which exercises `collection.py`.
 
 ### config.yaml structure
-- `id` **Required** The pipeline name.  This should be the same as the pipeline's parent folder and should use `_`s for separators to support Python module discovery.
+- `id` **Required** The pipeline name. This should be the same as the pipeline's parent folder and should use `_`s for separators to support Python module discovery.
 
 - `compute` **Required** Currently only the `awslambda` value is supported.
 
@@ -61,7 +61,7 @@ Create a development virtual environment with
 $ tox -e dev
 $ source devenv/bin/activate
 ```
-Create environment settigns for your pipeline deployment
+Create environment settings for your pipeline deployment
 ```
 $ export PROJECT=<The project name for resource cost tracking>
 $ export PIPELINE=<Your pipeline name>
