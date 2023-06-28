@@ -7,7 +7,7 @@ import botocore
 import docker
 import yaml
 
-from aws_asdi_pipelines.models.pipeline import Pipeline
+from stactools_pipelines.models.pipeline import Pipeline
 
 logging.basicConfig(level=logging.DEBUG)
 pipeline_name = os.environ["PIPELINE"]
@@ -52,7 +52,7 @@ def build_and_push(dockerfile: str, tag: str, pipeline_id: str):
     logging.debug(push_log)
 
 
-with open(f"./aws_asdi_pipelines/pipelines/{pipeline_name}/config.yaml") as f:
+with open(f"./stactools_pipelines/pipelines/{pipeline_name}/config.yaml") as f:
     config = yaml.safe_load(f)
     pipeline = Pipeline(**config)
 
