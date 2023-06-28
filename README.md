@@ -1,5 +1,5 @@
-# AWS-ASDI-Pipelines
-AWS-ASDI-Pipelines is a large scale, turnkey processing framework to create STAC metadata and cloud optimized formats for data stored on S3 using [stactools packages](https://github.com/stactools-packages).
+# Stactools-Pipelines
+Stactools-Pipelines is a large scale, turnkey processing framework to create STAC metadata and cloud optimized formats for data stored on S3 using [stactools packages](https://github.com/stactools-packages).
 
 
 ![Alt text](/docs/aws_asdi_cog.png)
@@ -15,9 +15,9 @@ AWS-ASDI-Pipelines is a large scale, turnkey processing framework to create STAC
 
 ## Developing Pipelines
 
-A template pipeline structure for Sentinel 1 is included in the repo [here](aws_asdi_pipelines/pipelines/sentinel1).
+A template pipeline structure for Sentinel 1 is included in the repo [here](stactools_pipelines/pipelines/sentinel1).
 
-To develop a new pipeline, create a directory in [pipelines](aws_asdi_pipelines/pipelines) using a simple name for your pipeline dataset.
+To develop a new pipeline, create a directory in [pipelines](stactools_pipelines/pipelines) using a simple name for your pipeline dataset.
 
 At a minimum include a
 - `requirements.txt` With your application's dependencies.
@@ -56,6 +56,8 @@ $ tox
 ```
 
 ### Deploying a Pipeline
+Deploying a pipeline will use the pipeline's config.yaml to deploy all the necessary resources for running the pipeline.  Including STAC Collection and Item creation Lambdas and any queues or Athena tables that are required. If an `sns` was specified it will begin processing notifications as soon as deployment is complete .
+
 Create a development virtual environment with
 ```
 $ tox -e dev
@@ -76,7 +78,7 @@ Deploy the infrastructure for your pipeline with
 $ cdk deploy
 ```
 
-## Developing aws-asdi-pipelines
+## Developing stactools-pipelines
 To create a development virtual environment for core repository development use
 ```
 $ tox -e dev
