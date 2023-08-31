@@ -10,12 +10,7 @@ aws_cdk_extras = [
 
 install_requires: List[str] = []
 
-extras_require_test = [
-    "flake8",
-    "black",
-    "pytest-cov",
-    "pytest",
-]
+extras_require_test = ["flake8", "black", "pytest-cov", "pytest", "moto"]
 
 extras_require_dev = [
     *extras_require_test,
