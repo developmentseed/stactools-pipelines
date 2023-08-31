@@ -8,6 +8,7 @@ from stactools_pipelines.models.pipeline import Pipeline
 
 # Required environment variables
 pipeline = os.environ["PIPELINE"]
+project = os.environ["PROJECT"]
 stack_name = pipeline.replace("_", "-")
 
 with open(f"./stactools_pipelines/pipelines/{pipeline}/config.yaml") as f:
@@ -23,8 +24,6 @@ with open(f"./stactools_pipelines/pipelines/{pipeline}/config.yaml") as f:
         pipeline,
     )
 
-    for k, v in dict(
-        Project="aws-asdi", Stack=stack_name, Pipeline=pipeline.id
-    ).items():
+    for k, v in dict(Project=project, Stack=stack_name, Pipeline=pipeline.id).items():
         cdk.Tags.of(app).add(k, v, apply_to_launched_instances=True)
     app.synth()
