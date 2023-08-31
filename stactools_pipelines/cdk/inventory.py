@@ -35,6 +35,28 @@ class Inventory(Construct):
             f"{self.stack_name}_repository_historic",
             repository_name=f"{pipeline.id}-historic",
         )
+
+        if pipeline.athena_table:
+            self.create_athena_resources(pipeline)
+            historic_docker_env = {
+                "OUTPUT_LOCATION": f"s3://{self.athena_results_bucket.bucket_name}"
+            }
+        else:
+            historic_docker_env = {}
+
+        historic_docker_env.update(
+            {
+                "DATABASE_NAME": pipeline.id,
+                "CHUNK_PARAMETER": (
+                    self.chunk_parameter.parameter_name
+                    if hasattr(self, "chunk_parameter")
+                    else "None"
+                ),
+                "QUEUE_URL": granule_queue.queue_url,
+                "INVENTORY_LOCATION": pipeline.inventory_location,
+            }
+        )
+
         self.process_inventory_chunk = aws_lambda.DockerImageFunction(
             self,
             f"{self.stack_name}-process_chunk",
@@ -44,23 +66,10 @@ class Inventory(Construct):
             memory_size=1000,
             timeout=cdk.Duration.minutes(14),
             log_retention=logs.RetentionDays.ONE_WEEK,
-            environment={
-                "OUTPUT_LOCATION": f"s3://{self.athena_results_bucket.bucket_name}",
-                "DATABASE_NAME": pipeline.id,
-                "CHUNK_PARAMETER": (
-                    self.chunk_parameter.parameter_name
-                    if hasattr(self, "chunk_parameter")
-                    else "None"
-                ),
-                "QUEUE_URL": granule_queue.queue_url,
-                "INVENTORY_LOCATION": pipeline.inventory_location,
-            },
+            environment=historic_docker_env,
         )
 
         granule_queue.grant_send_messages(self.process_inventory_chunk.role)
-
-        if Pipeline.athena_table:
-            self.create_athena_resources(pipeline)
 
         ### Open bucket policy needed for inventory location
         self.process_inventory_chunk.role.add_to_principal_policy(

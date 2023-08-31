@@ -1,17 +1,17 @@
-import os
-
 import aws_cdk as cdk
 import yaml
 
 from stactools_pipelines.cdk.lambda_stack import LambdaStack
 from stactools_pipelines.models.pipeline import Pipeline
+from stactools_pipelines.models.deployment import Deployment
 
-# Required environment variables
-pipeline = os.environ["PIPELINE"]
-project = os.environ["PROJECT"]
-stack_name = pipeline.replace("_", "-")
+deployment = Deployment()
 
-with open(f"./stactools_pipelines/pipelines/{pipeline}/config.yaml") as f:
+stack_name = (
+    f'{deployment.project}-{deployment.pipeline.replace("_", "-")}-{deployment.stage}'
+)
+
+with open(f"./stactools_pipelines/pipelines/{deployment.pipeline}/config.yaml") as f:
     config = yaml.safe_load(f)
     pipeline = Pipeline(**config)
 
@@ -24,6 +24,11 @@ with open(f"./stactools_pipelines/pipelines/{pipeline}/config.yaml") as f:
         pipeline,
     )
 
-    for k, v in dict(Project=project, Stack=stack_name, Pipeline=pipeline.id).items():
+    for k, v in dict(
+        Project=deployment.project,
+        Stack=stack_name,
+        Pipeline=pipeline.id,
+        Stage=deployment.stage,
+    ).items():
         cdk.Tags.of(app).add(k, v, apply_to_launched_instances=True)
     app.synth()

@@ -42,7 +42,7 @@ At a minimum include a
 
 - `historic_frequency` **Optional** If an `inventory_location` is included the `historic_frequency` (how often in hours the `historic.py` is run) must also be included.  A value of `0` indicates that the `historic.py` function will run a single time on deployment and process the entire inventory. If a value of > `0` is specified then an `initial_chunk` must also be specified.  The pipeline will build a stack which uses these values to incrementally chunk through the inventory file with `cron` executions to process until the entire inventory has been processed.
 
-
+- `athena_table` **Optional** default is `False`, to create an athena table (for AWS inventory queries) and a bucket for the query results. If `True`, `inventory_location` must be provided.
 
 ### Testing a Pipeline
 Create an environment setting using your pipline name.
