@@ -21,6 +21,7 @@ def build_and_push(dockerfile: str, tag: str, pipeline_id: str):
         buildargs={
             "pipeline": pipeline_id,
         },
+        platform="linux/amd64",
     )
     for chunk in build_logs:
         if "stream" in chunk:
