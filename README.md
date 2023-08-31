@@ -2,7 +2,7 @@
 Stactools-Pipelines is a large scale, turnkey processing framework to create STAC metadata and cloud optimized formats for data stored on S3 using [stactools packages](https://github.com/stactools-packages).
 
 
-![Alt text](/docs/aws_asdi_cog.png)
+![Alt text](/docs/stactools_pipelines_cog.png)
 
 
 ## Requirements
