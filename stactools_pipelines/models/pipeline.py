@@ -17,6 +17,7 @@ class Pipeline(BaseModel):
     inventory_location: Optional[str]
     historic_frequency: Optional[int]
     initial_chunk: Optional[str]
+    athena_table: Optional[bool] = True
 
     @root_validator(pre=False)
     def historic_frequency_if_inventory_location(cls, values):
@@ -31,4 +32,12 @@ class Pipeline(BaseModel):
                 raise ValueError(
                     "Must include initial_chunk when historic_frequency > 0"
                 )
+        return values
+
+    @root_validator(pre=False)
+    def no_athena_table_if_no_inventory_location(cls, values):
+        if values["athena_table"] and values["inventory_location"] is None:
+            raise ValueError(
+                "Must include an inventory location to create athena resources"
+            )
         return values
