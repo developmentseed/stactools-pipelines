@@ -2,8 +2,8 @@ import aws_cdk as cdk
 import yaml
 
 from stactools_pipelines.cdk.lambda_stack import LambdaStack
-from stactools_pipelines.models.pipeline import Pipeline
 from stactools_pipelines.models.deployment import Deployment
+from stactools_pipelines.models.pipeline import Pipeline
 
 deployment = Deployment()
 

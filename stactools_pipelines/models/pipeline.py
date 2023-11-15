@@ -36,5 +36,7 @@ class Pipeline(BaseModel):
 
     @model_validator(mode="after")
     def file_list_or_inventory_location(cls, values):
-        assert not (values.file_list is not None and values.inventory_location is not None), "Must include either inventory_location or file_list but not both"
+        assert not (
+            values.file_list is not None and values.inventory_location is not None
+        ), "Must include either inventory_location or file_list but not both"
         return values
