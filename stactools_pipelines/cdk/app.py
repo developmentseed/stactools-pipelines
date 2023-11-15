@@ -7,10 +7,6 @@ from stactools_pipelines.models.deployment import Deployment
 
 deployment = Deployment()
 
-stack_name = (
-    f'{deployment.project}-{deployment.pipeline.replace("_", "-")}-{deployment.stage}'
-)
-
 with open(f"./stactools_pipelines/pipelines/{deployment.pipeline}/config.yaml") as f:
     config = yaml.safe_load(f)
     pipeline = Pipeline(**config)
@@ -20,13 +16,13 @@ with open(f"./stactools_pipelines/pipelines/{deployment.pipeline}/config.yaml") 
     # For more information, see https://docs.aws.amazon.com/cdk/latest/guide/environments.html
     LambdaStack(
         app,
-        stack_name,
+        deployment.stack_name,
         pipeline,
     )
 
     for k, v in dict(
         Project=deployment.project,
-        Stack=stack_name,
+        Stack=deployment.stack_name,
         Pipeline=pipeline.id,
         Stage=deployment.stage,
     ).items():
