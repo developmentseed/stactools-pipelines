@@ -37,7 +37,7 @@ class LambdaStack(cdk.Stack):
             pipeline=pipeline,
         )
 
-        if pipeline.sns or pipeline.inventory_location:
+        if pipeline.sns or pipeline.inventory_location or pipeline.file_list:
             self.queue = Queue(
                 self,
                 id=f"{stack_name}-queue",
@@ -61,7 +61,7 @@ class LambdaStack(cdk.Stack):
             )
             self.granule_topic.add_subscription(self.sns_subscription)
 
-        if pipeline.inventory_location:
+        if pipeline.inventory_location or pipeline.file_list:
             self.inventory = Inventory(
                 self,
                 id=f"{stack_name}-inventory",

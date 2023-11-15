@@ -30,38 +30,34 @@ class Inventory(Construct):
         super().__init__(scope, id)
         self.stack_name = cdk.Stack.of(self).stack_name
 
-        self.athena_results_bucket = s3.Bucket(
-            self,
-            f"{self.stack_name}-athena-results",
-        )
-        self.table_creator_function = python.PythonFunction(
-            self,
-            id=f"{self.stack_name}-table-creator",
-            entry=f"{Path(__file__).parent}/athena_creator",
-            runtime=aws_lambda.Runtime.PYTHON_3_8,
-            memory_size=1000,
-            timeout=cdk.Duration.minutes(14),
-            log_retention=logs.RetentionDays.ONE_WEEK,
-            environment={
-                "RESULTS_LOCATION": self.athena_results_bucket.bucket_name,
-                "PIPELINE_NAME": pipeline.id,
-                "INVENTORY_LOCATION": pipeline.inventory_location,
-            },
-        )
-        self.athena_results_bucket.grant_read_write(self.table_creator_function.role)
-        self.table_creator_function.role.add_managed_policy(
-            iam.ManagedPolicy.from_aws_managed_policy_name("AmazonAthenaFullAccess")
-        )
-        self.invoke_table_creator = InvokeFunction(
-            self,
-            id=f"{self.stack_name}-invoke-table-creator",
-            function=self.table_creator_function,
-        )
         self.repo_historic = ecr.Repository.from_repository_name(
             self,
             f"{self.stack_name}_repository_historic",
             repository_name=f"{pipeline.id}-historic",
         )
+
+        if pipeline.inventory_location:
+            self.create_athena_resources(pipeline)
+            historic_docker_env = {
+                "OUTPUT_LOCATION": f"s3://{self.athena_results_bucket.bucket_name}"
+            }
+        else:
+            historic_docker_env = {}
+
+        historic_docker_env.update(
+            {
+                "DATABASE_NAME": pipeline.id,
+                "CHUNK_PARAMETER": (
+                    self.chunk_parameter.parameter_name
+                    if hasattr(self, "chunk_parameter")
+                    else "None"
+                ),
+                "QUEUE_URL": granule_queue.queue_url,
+                "INVENTORY_LOCATION": pipeline.inventory_location,
+                "FILE_LIST": pipeline.file_list,
+            }
+        )
+
         self.process_inventory_chunk = aws_lambda.DockerImageFunction(
             self,
             f"{self.stack_name}-process_chunk",
@@ -71,32 +67,11 @@ class Inventory(Construct):
             memory_size=1000,
             timeout=cdk.Duration.minutes(14),
             log_retention=logs.RetentionDays.ONE_WEEK,
-            environment={
-                "OUTPUT_LOCATION": f"s3://{self.athena_results_bucket.bucket_name}",
-                "DATABASE_NAME": pipeline.id,
-                "CHUNK_PARAMETER": (
-                    self.chunk_parameter.parameter_name
-                    if hasattr(self, "chunk_parameter")
-                    else "None"
-                ),
-                "QUEUE_URL": granule_queue.queue_url,
-                "INVENTORY_LOCATION": pipeline.inventory_location,
-            },
+            environment=historic_docker_env,
         )
+
         granule_queue.grant_send_messages(self.process_inventory_chunk.role)
-        self.athena_results_bucket.grant_read_write(self.process_inventory_chunk.role)
-        self.process_inventory_chunk.role.add_to_principal_policy(
-            iam.PolicyStatement(
-                actions=[
-                    "athena:StartQueryExecution",
-                    "athena:GetQueryExecution",
-                    "athena:GetQueryResults",
-                    "glue:GetTable",
-                    "glue:GetDatabase",
-                ],
-                resources=["*"],
-            )
-        )
+
         ### Open bucket policy needed for inventory location
         self.process_inventory_chunk.role.add_to_principal_policy(
             iam.PolicyStatement(
@@ -126,7 +101,13 @@ class Inventory(Construct):
                 self,
                 id=f"{self.stack_name}-invoke-process-inventory",
                 function=self.process_inventory_chunk,
-            ).node.add_dependency(self.invoke_table_creator)
+            )
+
+            if pipeline.inventory_location:
+                self.invoke_process_inventory.node.add_dependency(
+                    self.invoke_table_creator
+                )
+
         else:
             self.cron_rule = events.Rule(
                 self,
@@ -138,3 +119,46 @@ class Inventory(Construct):
             self.cron_rule.add_target(
                 events_targets.LambdaFunction(self.process_inventory_chunk)
             )
+
+    def create_athena_resources(self, pipeline: Pipeline):
+        self.athena_results_bucket = s3.Bucket(
+            self,
+            f"{self.stack_name}-athena-results",
+        )
+        self.table_creator_function = python.PythonFunction(
+            self,
+            id=f"{self.stack_name}-table-creator",
+            entry=f"{Path(__file__).parent}/athena_creator",
+            runtime=aws_lambda.Runtime.PYTHON_3_8,
+            memory_size=1000,
+            timeout=cdk.Duration.minutes(14),
+            log_retention=logs.RetentionDays.ONE_WEEK,
+            environment={
+                "RESULTS_LOCATION": self.athena_results_bucket.bucket_name,
+                "PIPELINE_NAME": pipeline.id,
+                "INVENTORY_LOCATION": pipeline.inventory_location,
+            },
+        )
+        self.athena_results_bucket.grant_read_write(self.table_creator_function.role)
+        self.table_creator_function.role.add_managed_policy(
+            iam.ManagedPolicy.from_aws_managed_policy_name("AmazonAthenaFullAccess")
+        )
+        self.invoke_table_creator = InvokeFunction(
+            self,
+            id=f"{self.stack_name}-invoke-table-creator",
+            function=self.table_creator_function,
+        )
+
+        self.athena_results_bucket.grant_read_write(self.process_inventory_chunk.role)
+        self.process_inventory_chunk.role.add_to_principal_policy(
+            iam.PolicyStatement(
+                actions=[
+                    "athena:StartQueryExecution",
+                    "athena:GetQueryExecution",
+                    "athena:GetQueryResults",
+                    "glue:GetTable",
+                    "glue:GetDatabase",
+                ],
+                resources=["*"],
+            )
+        )

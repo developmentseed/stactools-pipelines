@@ -23,7 +23,7 @@ extras_require_dev = [
     "aws-lambda-powertools",
     "boto3",
     "pydantic",
-    "pyyaml",
+    "pydantic-settings" "pyyaml",
     "docker",
     "isort",
     "mypy",
