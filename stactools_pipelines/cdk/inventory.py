@@ -36,7 +36,7 @@ class Inventory(Construct):
             repository_name=f"{pipeline.id}-historic",
         )
 
-        if pipeline.athena_table:
+        if pipeline.inventory_location:
             self.create_athena_resources(pipeline)
             historic_docker_env = {
                 "OUTPUT_LOCATION": f"s3://{self.athena_results_bucket.bucket_name}"
@@ -54,6 +54,7 @@ class Inventory(Construct):
                 ),
                 "QUEUE_URL": granule_queue.queue_url,
                 "INVENTORY_LOCATION": pipeline.inventory_location,
+                "FILE_LIST": pipeline.file_list,
             }
         )
 
@@ -102,7 +103,7 @@ class Inventory(Construct):
                 function=self.process_inventory_chunk,
             )
 
-            if pipeline.athena_table:
+            if pipeline.inventory_location:
                 self.invoke_process_inventory.node.add_dependency(
                     self.invoke_table_creator
                 )

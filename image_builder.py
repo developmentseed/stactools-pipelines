@@ -66,7 +66,7 @@ with open(f"./stactools_pipelines/pipelines/{pipeline_name}/config.yaml") as f:
         tag = pipeline.id
         build_and_push(dockerfile, tag, pipeline.id)
 
-    if pipeline.inventory_location:
+    if pipeline.inventory_location or pipeline.file_list:
         dockerfile = "./lambda.historic.Dockerfile"
         tag = f"{pipeline.id}-historic"
         build_and_push(dockerfile, tag, pipeline.id)

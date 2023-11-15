@@ -17,7 +17,7 @@ class Pipeline(BaseModel):
     inventory_location: Optional[str] = None
     historic_frequency: Optional[int] = None
     initial_chunk: Optional[str] = None
-    athena_table: Optional[bool] = False
+    file_list: Optional[str] = None
 
     @model_validator(mode="after")
     def historic_frequency_if_inventory_location(cls, values):
@@ -35,9 +35,6 @@ class Pipeline(BaseModel):
         return values
 
     @model_validator(mode="after")
-    def no_athena_table_if_no_inventory_location(cls, values):
-        if values.athena_table and values.inventory_location is None:
-            raise ValueError(
-                "Must include an inventory location to create athena resources"
-            )
+    def file_list_or_inventory_location(cls, values):
+        assert not (values.file_list is not None and values.inventory_location is not None), "Must include either inventory_location or file_list but not both"
         return values

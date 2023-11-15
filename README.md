@@ -38,11 +38,11 @@ At a minimum include a
 
 - `sns` **Optional** The SNS topic to listen to for new granule notifications.
 
-- `inventory_location` **Optional** The location of an S3 inventory or file listing that can be used by the `pipeline` to process and ingest existing granules.  Include a `historic.py` file (and a `test_historic.py`) in your pipeline which implements a `query_inventory`, `row_to_message_body` and `handler` method to query the inventory and send the results to the processing queue.
+- `inventory_location` **Optional** The location of an S3 inventory that can be used by the `pipeline` to process and ingest existing granules.  Include a `historic.py` file (and a `test_historic.py`) in your pipeline which implements a `query_inventory`, `row_to_message_body` and `handler` method to query the inventory and send the results to the processing queue. If provided, an athena table is created. Default is `None`. If provided, `file_list` can't be provided. 
 
 - `historic_frequency` **Optional** If an `inventory_location` is included the `historic_frequency` (how often in hours the `historic.py` is run) must also be included.  A value of `0` indicates that the `historic.py` function will run a single time on deployment and process the entire inventory. If a value of > `0` is specified then an `initial_chunk` must also be specified.  The pipeline will build a stack which uses these values to incrementally chunk through the inventory file with `cron` executions to process until the entire inventory has been processed.
 
-- `athena_table` **Optional** default is `False`, to create an athena table (for AWS inventory queries) and a bucket for the query results. If `True`, `inventory_location` must be provided.
+- `file_list` **Optional** Location of a non-standard AWS inventory file. Default is `None`. If provided, no Athena table is created and the 'historic' lambda processes that list. If provided, `inventory_location` can't be provided. 
 
 ### Testing a Pipeline
 Create an environment setting using your pipline name.
