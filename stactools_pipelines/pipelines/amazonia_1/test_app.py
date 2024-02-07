@@ -33,7 +33,7 @@ def test_xml_key_from_quicklook_key():
 
 @pytest.mark.parametrize("pipeline_id", ["amazonia_1"])
 @pytest.mark.parametrize("module", ["app"])
-@pytest.mark.parametrize("bucket", ["amazonia-pds"])
+@pytest.mark.parametrize("bucket", ["brazil-eosats"])
 @pytest.mark.parametrize("key", [KEY])
 def test_handler(
     mock_env,  # pylint: disable=unused-argument
