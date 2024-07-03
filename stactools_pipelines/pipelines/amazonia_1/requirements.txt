@@ -1,4 +1,4 @@
 aws-lambda-powertools
 jmespath
-stactools-amazonia-1 >= 0.1.2
+stactools-amazonia-1 >= 0.1.3
 s3fs
