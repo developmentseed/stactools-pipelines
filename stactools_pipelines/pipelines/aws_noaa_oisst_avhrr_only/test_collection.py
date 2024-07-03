@@ -12,7 +12,7 @@ from stactools_pipelines.pipelines.aws_noaa_oisst_avhrr_only.collection import h
 
 def test_create_collection():
     collection = module_create_collection()
-    assert type(collection) == pystac.collection.Collection
+    assert type(collection) is pystac.collection.Collection
 
 
 @pytest.mark.parametrize("pipeline_id", ["aws_noaa_oisst_avhrr_only"])

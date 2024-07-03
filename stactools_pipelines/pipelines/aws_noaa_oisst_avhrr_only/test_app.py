@@ -12,7 +12,7 @@ from stactools_pipelines.pipelines.aws_noaa_oisst_avhrr_only.app import handler
 
 def test_create_item():
     item = module_create_item()
-    assert type(item) == pystac.item.Item
+    assert type(item) is pystac.item.Item
 
 
 @pytest.mark.parametrize("pipeline_id", ["aws_noaa_oisst_avhrr_only"])
