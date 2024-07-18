@@ -23,9 +23,20 @@ def handler(event: SQSEvent, context):
         record_message = json.loads(record_body["Message"])
         for sns_record in record_message["Records"]:
             key = sns_record["s3"]["object"]["key"]
-            path = f"https://noaa-hrrr-bdp-pds.s3.amazonaws.com/{key.lstrip('/')}"
-            print(path)
+            bucket = sns_record["s3"]["bucket"]["name"]
+            path = f"https://{bucket}.s3.amazonaws.com/{key.lstrip('/')}"
             href_parsed = parse_href(path)
+
+            if not href_parsed:
+                if path.endswith(".idx"):
+                    print(f"{path} is a .idx file... skipping!")
+                else:
+                    print(
+                        f"stactools.noaa_hrrr.metadata.parse_href cannot parse this href: {path}"
+                    )
+                continue
+
+            print(path)
             stac = create_item(**href_parsed)
 
             stac.collection_id = COLLECTION_ID_FORMAT.format(
@@ -37,6 +48,7 @@ def handler(event: SQSEvent, context):
                 data=json.dumps(stac.to_dict()),
                 headers=headers,
             )
+
             try:
                 response.raise_for_status()
             except Exception:
