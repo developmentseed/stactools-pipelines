@@ -33,7 +33,7 @@ def test_xml_key_from_quicklook_key():
 
 @pytest.mark.parametrize("pipeline_id", ["amazonia_1"])
 @pytest.mark.parametrize("module", ["app"])
-@pytest.mark.parametrize("bucket", ["amazonia-pds"])
+@pytest.mark.parametrize("bucket", ["brazil-eosats"])
 @pytest.mark.parametrize("key", [KEY])
 def test_handler(
     mock_env,  # pylint: disable=unused-argument
@@ -46,7 +46,7 @@ def test_handler(
     handler(event=sqs_event, context={})
     get_token.assert_called_once()
     create_item.assert_called_once_with(
-        asset_href="s3://amazonia-pds/AMAZONIA1/WFI/035/020/"
+        asset_href="s3://brazil-eosats/AMAZONIA1/WFI/035/020/"
         "AMAZONIA_1_WFI_20220814_035_020_L4/AMAZONIA_1_WFI_20220814_035_020_L4_BAND2.xml"
     )
     requests.post.assert_called_once_with(
