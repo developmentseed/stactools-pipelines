@@ -25,32 +25,33 @@ def handler(event: SQSEvent, context):
             key = sns_record["s3"]["object"]["key"]
             bucket = sns_record["s3"]["bucket"]["name"]
             path = f"https://{bucket}.s3.amazonaws.com/{key.lstrip('/')}"
-            href_parsed = parse_href(path)
+            if not path.endswith(".idx"):
+                continue
+            else:
+                path = path[:-4]
+                href_parsed = parse_href(path)
 
-            if not href_parsed:
-                if path.endswith(".idx"):
-                    print(f"{path} is a .idx file... skipping!")
-                else:
+                if not href_parsed:
                     print(
                         f"stactools.noaa_hrrr.metadata.parse_href cannot parse this href: {path}"
                     )
-                continue
+                    continue
 
-            print(path)
-            stac = create_item(**href_parsed)
+                print(path)
+                stac = create_item(**href_parsed)
 
-            stac.collection_id = COLLECTION_ID_FORMAT.format(
-                product=href_parsed["product"].value,
-                region=href_parsed["region"].value,
-            )
-            response = requests.post(
-                url=ingestions_endpoint,
-                data=json.dumps(stac.to_dict()),
-                headers=headers,
-            )
+                stac.collection_id = COLLECTION_ID_FORMAT.format(
+                    product=href_parsed["product"].value,
+                    region=href_parsed["region"].value,
+                )
+                response = requests.post(
+                    url=ingestions_endpoint,
+                    data=json.dumps(stac.to_dict()),
+                    headers=headers,
+                )
 
-            try:
-                response.raise_for_status()
-            except Exception:
-                print(response.text)
-                raise
+                try:
+                    response.raise_for_status()
+                except Exception:
+                    print(response.text)
+                    raise
