@@ -1,0 +1,6 @@
+---
+  id: "noaa_hrrr"
+  compute: "awslambda"
+  secret_arn: "arn:aws:secretsmanager:us-west-2:751953039297:secret:asdi-auth-stack-dev/asdi-workflows-fSzAw7"
+  ingestor_url: "https://crtx3178aa.execute-api.us-west-2.amazonaws.com/dev"
+  sns: "arn:aws:sns:us-east-1:123901341784:NewHRRRObject"

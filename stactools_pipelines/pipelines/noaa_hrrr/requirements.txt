@@ -1,0 +1,6 @@
+aws-lambda-powertools
+jmespath
+requests
+stactools-noaa-hrrr
+s3fs
+boto3
