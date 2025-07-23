@@ -12,9 +12,9 @@ class JwtCache:
     Cognito.
     """
 
-    def __init__(self):
+    def __init__(self, table_name: str):
         self.dynamodb = boto3.resource("dynamodb")
-        self.table = self.dynamodb.Table(os.environ["JWT_CACHE_TABLE"])
+        self.table = self.dynamodb.Table(table_name)
 
     def get_token(self, client_id: str) -> Optional[str]:
         response = self.table.get_item(Key={"client_id": client_id})
@@ -45,7 +45,7 @@ def get_token() -> str:
     scope = os.environ["SCOPE"]
 
     # Try to get a non-expired JWT from the cache
-    cache = JwtCache()
+    cache = JwtCache(os.environ["JWT_CACHE_TABLE_NAME"])
     jwt = cache.get_token(client_id)
     if jwt:
         return jwt
@@ -73,7 +73,6 @@ def get_token() -> str:
     jwt = data["access_token"]
 
     # Store the new JWT in the cache
-    cache = JwtCache()
     cache.set_token(
         client_id,
         jwt=jwt,

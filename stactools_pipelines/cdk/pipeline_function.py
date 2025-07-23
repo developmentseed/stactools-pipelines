@@ -60,7 +60,7 @@ class PipelineFunction(Construct):
                 ).to_string(),
                 "SCOPE": self.secret.secret_value_from_json("scope").to_string(),
                 "INGESTOR_URL": pipeline.ingestor_url,
-                "JWT_CACHE_TABLE": jwt_cache_table.table_arn,
+                "JWT_CACHE_TABLE_NAME": jwt_cache_table.table_name,
             },
         )
         jwt_cache_table.grant_read_write_data(self.function)
