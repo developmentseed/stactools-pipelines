@@ -20,6 +20,6 @@ class JwtCacheStack(cdk.Stack):
                 type=dynamodb.AttributeType.STRING,
             ),
             billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,  # On-demand pricing
-            time_to_live_attribute="ttl",  # Attribute to store TTL (epoch seconds)
+            time_to_live_attribute="expires_at",  # Attribute to store TTL (epoch seconds)
             removal_policy=cdk.RemovalPolicy.DESTROY,  # For dev/test, change as needed
         )
