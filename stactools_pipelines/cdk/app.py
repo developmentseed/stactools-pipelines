@@ -15,7 +15,7 @@ app = cdk.App()
 
 jwt_cache_stack = JwtCacheStack(
     app,
-    stack_name,
+    f"{stack_name}-jwt-cache",
 )
 
 with open(f"./stactools_pipelines/pipelines/{pipeline}/config.yaml") as f:
