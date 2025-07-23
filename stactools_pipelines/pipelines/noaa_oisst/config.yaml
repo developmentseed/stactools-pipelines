@@ -1,7 +1,7 @@
 ---
   id: "noaa_oisst"
   compute: "awslambda"
-  secret_arn: "arn:aws:secretsmanager:eu-central-1:751953039297:secret:asdi-auth-stack-alukach/asdi-workflows-6awSos"
+  secret_arn: "arn:aws:secretsmanager:eu-central-1:751953039297:secret:asdi-auth-stack-dev/asdi-workflows-6awSos"
   ingestor_url: "https://crtx3178aa.execute-api.us-west-2.amazonaws.com/dev"
   sns: "arn:aws:sns:us-east-1:709902155096:NewCDRSeaSurfTempOptInterpObject"
   inventory_location: "s3://nodd-bucket-inventory/noaa-cdr-sea-surface-temp-optimum-interpolation-pds/DailyCSV/hive/dt=2023-04-24-01-00/"
