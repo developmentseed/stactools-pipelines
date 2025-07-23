@@ -1,4 +1,5 @@
 import aws_cdk as cdk
+import aws_cdk.aws_dynamodb as dynamodb
 import aws_cdk.aws_ecr as ecr
 import aws_cdk.aws_iam as iam
 import aws_cdk.aws_lambda as aws_lambda
@@ -10,11 +11,13 @@ from stactools_pipelines.models.pipeline import Pipeline
 
 
 class PipelineFunction(Construct):
+
     def __init__(
         self,
         scope: Construct,
         id: str,
         pipeline: Pipeline,
+        jwt_cache_table: dynamodb.Table,
         collection: bool = False,
         *,
         prefix=None,
@@ -57,8 +60,11 @@ class PipelineFunction(Construct):
                 ).to_string(),
                 "SCOPE": self.secret.secret_value_from_json("scope").to_string(),
                 "INGESTOR_URL": pipeline.ingestor_url,
+                "JWT_CACHE_TABLE_NAME": jwt_cache_table.table_name,
             },
         )
+        jwt_cache_table.grant_read_write_data(self.function)
+
         self.open_buckets_statement = iam.PolicyStatement(
             resources=[
                 "arn:aws:s3:::*",

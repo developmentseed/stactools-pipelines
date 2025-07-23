@@ -1,4 +1,5 @@
 import aws_cdk as cdk
+import aws_cdk.aws_dynamodb as dynamodb
 import aws_cdk.aws_sns as sns
 import aws_cdk.aws_sns_subscriptions as sns_subscriptions
 from constructs import Construct
@@ -11,12 +12,13 @@ from stactools_pipelines.models.pipeline import Pipeline
 
 
 class LambdaStack(cdk.Stack):
+
     def __init__(
         self,
         scope: Construct,
         stack_name: str,
         pipeline: Pipeline,
-        **kwargs,
+        jwt_cache_table: dynamodb.Table,
     ) -> None:
         super().__init__(scope, stack_name)
         self.collection_function = PipelineFunction(
@@ -35,6 +37,7 @@ class LambdaStack(cdk.Stack):
             self,
             id=f"{stack_name}-granule_function",
             pipeline=pipeline,
+            jwt_cache_table=jwt_cache_table,
         )
 
         if pipeline.sns or pipeline.inventory_location:
