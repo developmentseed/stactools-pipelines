@@ -1,7 +1,7 @@
 ---
   id: "cop_dem_30"
   compute: "awslambda"
-  secret_arn: "arn:aws:secretsmanager:eu-central-1:751953039297:secret:asdi-auth-stack-alukach/asdi-workflows-6awSos"
+  secret_arn: "arn:aws:secretsmanager:eu-central-1:751953039297:secret:asdi-auth-stack-dev/asdi-workflows-fSzAw7"
   ingestor_url: "https://crtx3178aa.execute-api.us-west-2.amazonaws.com/dev"
   inventory_location: "s3://asdi-athena-testing-eu-central-1/inventories/copernicus-dem-30m.csv"
   historic_frequency: 0
