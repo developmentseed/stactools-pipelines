@@ -1,11 +1,11 @@
 import aws_cdk as cdk
 import aws_cdk.aws_dynamodb as dynamodb
-import aws_cdk.aws_ecr as ecr
 import aws_cdk.aws_iam as iam
 import aws_cdk.aws_lambda as aws_lambda
 import aws_cdk.aws_logs as logs
 import aws_cdk.aws_secretsmanager as secretsmanager
 from constructs import Construct
+from aws_cdk.aws_ecr_assets import Platform
 
 from stactools_pipelines.models.pipeline import Pipeline
 
@@ -16,34 +16,35 @@ class PipelineFunction(Construct):
         self,
         scope: Construct,
         id: str,
-        pipeline: Pipeline,
-        jwt_cache_table: dynamodb.Table,
-        collection: bool = False,
         *,
+        pipeline: Pipeline,
+        collection: bool = False,
+        jwt_cache_table: dynamodb.Table,
         prefix=None,
     ) -> None:
         super().__init__(scope, id)
         self.stack_name = cdk.Stack.of(self).stack_name
         if collection:
-            repository_name = f"{pipeline.id}-collection"
+            dockerfile = "lambda.collection.Dockerfile"
             function_name = f"{self.stack_name}-collection_function"
         else:
-            repository_name = pipeline.id
+            dockerfile = "lambda.Dockerfile"
             function_name = f"{self.stack_name}-granule_function"
 
         self.secret = secretsmanager.Secret.from_secret_complete_arn(
             self, f"{pipeline.id}_secret_new", secret_complete_arn=pipeline.secret_arn
         )
-        self.repo = ecr.Repository.from_repository_name(
-            self,
-            f"{self.stack_name}_Repository",
-            repository_name=repository_name,
-        )
+
         self.function = aws_lambda.DockerImageFunction(
             self,
             function_name,
-            code=aws_lambda.DockerImageCode.from_ecr(
-                repository=self.repo, tag="latest"
+            code=aws_lambda.DockerImageCode.from_image_asset(
+                directory="./",
+                platform=Platform.LINUX_AMD64,
+                build_args={
+                    "pipeline": pipeline.id,
+                },
+                file=dockerfile,
             ),
             memory_size=1000,
             timeout=cdk.Duration.minutes(14),
@@ -62,7 +63,7 @@ class PipelineFunction(Construct):
                 "INGESTOR_URL": pipeline.ingestor_url,
                 "JWT_CACHE_TABLE_NAME": jwt_cache_table.table_name,
             },
-        )
+        ) 
         jwt_cache_table.grant_read_write_data(self.function)
 
         self.open_buckets_statement = iam.PolicyStatement(

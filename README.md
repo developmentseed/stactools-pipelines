@@ -6,7 +6,7 @@ Stactools-Pipelines is a large scale, turnkey processing framework to create STA
 
 
 ## Requirements
-- Python>=3.11
+- Python>=3.12
 - Docker
 - tox
 - awscli
@@ -103,14 +103,8 @@ Create environment settings for your pipeline deployment
 $ export PROJECT=<The project name for resource cost tracking>
 $ export PIPELINE=<Your pipeline name>
 ```
-With an AWS profile enabled with sufficient permissions build and push your pipeline image with
-```
-$ python image_builder.py
-```
-This will package your pipeline's Lambda code and the its dependencies specified in the requirements.txt into a Docker image and push it to ECR for use by the pipeline Lambdas.
-
-
-Deploy the infrastructure for your pipeline with
+With an AWS profile enabled with sufficient permissions to create your
+infrastructure you can deploy via
 ```
 $ cdk deploy
 ```
