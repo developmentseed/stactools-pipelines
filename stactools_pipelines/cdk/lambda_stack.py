@@ -21,10 +21,12 @@ class LambdaStack(cdk.Stack):
         jwt_cache_table: dynamodb.Table,
     ) -> None:
         super().__init__(scope, stack_name)
+
         self.collection_function = PipelineFunction(
             self,
             id=f"{stack_name}-collection_function",
             pipeline=pipeline,
+            jwt_cache_table=jwt_cache_table,
             collection=True,
         )
         self.invoke_collection_function = InvokeFunction(
