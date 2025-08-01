@@ -4,7 +4,7 @@ import os
 import requests
 from aws_lambda_powertools.utilities.data_classes import SQSEvent, event_source
 from stactools.core import use_fsspec
-from stactools.sentinel1.grd import Format
+from stactools.sentinel1.formats import Format
 from stactools.sentinel1.grd.stac import create_item
 
 from stactools_pipelines.cognito.utils import get_token

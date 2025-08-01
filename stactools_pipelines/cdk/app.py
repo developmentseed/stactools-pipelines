@@ -17,16 +17,15 @@ jwt_cache_stack = JwtCacheStack(
     app,
     f"{stack_name}-jwt-cache",
 )
-
 with open(f"./stactools_pipelines/pipelines/{pipeline}/config.yaml") as f:
     config = yaml.safe_load(f)
     pipeline = Pipeline(**config)
 
     # For more information, see https://docs.aws.amazon.com/cdk/latest/guide/environments.html
     LambdaStack(
-        app,
-        stack_name,
-        pipeline,
+        scope=app,
+        stack_name=stack_name,
+        pipeline=pipeline,
         jwt_cache_table=jwt_cache_stack.table,
     )
 
@@ -34,4 +33,4 @@ with open(f"./stactools_pipelines/pipelines/{pipeline}/config.yaml") as f:
         Project="aws-asdi", Stack=stack_name, Pipeline=pipeline.id
     ).items():
         cdk.Tags.of(app).add(k, v, apply_to_launched_instances=True)
-    app.synth()
+app.synth()

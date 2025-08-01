@@ -4,3 +4,4 @@ rasterio
 stactools-sentinel1
 s3fs
 boto3
+requests

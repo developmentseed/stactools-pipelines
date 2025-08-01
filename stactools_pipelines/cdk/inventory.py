@@ -1,7 +1,6 @@
 from pathlib import Path
 
 import aws_cdk as cdk
-import aws_cdk.aws_ecr as ecr
 import aws_cdk.aws_events as events
 import aws_cdk.aws_events_targets as events_targets
 import aws_cdk.aws_iam as iam
@@ -9,9 +8,10 @@ import aws_cdk.aws_lambda as aws_lambda
 import aws_cdk.aws_lambda_python_alpha as python
 import aws_cdk.aws_logs as logs
 import aws_cdk.aws_s3 as s3
-import aws_cdk.aws_sqs as sqs
 import aws_cdk.aws_ssm as ssm
+import aws_cdk.aws_sqs as sqs
 from constructs import Construct
+from aws_cdk.aws_ecr_assets import Platform
 
 from stactools_pipelines.cdk.invoke_function import InvokeFunction
 from stactools_pipelines.models.pipeline import Pipeline
@@ -57,16 +57,16 @@ class Inventory(Construct):
             id=f"{self.stack_name}-invoke-table-creator",
             function=self.table_creator_function,
         )
-        self.repo_historic = ecr.Repository.from_repository_name(
-            self,
-            f"{self.stack_name}_repository_historic",
-            repository_name=f"{pipeline.id}-historic",
-        )
         self.process_inventory_chunk = aws_lambda.DockerImageFunction(
             self,
             f"{self.stack_name}-process_chunk",
-            code=aws_lambda.DockerImageCode.from_ecr(
-                repository=self.repo_historic, tag="latest"
+            code=aws_lambda.DockerImageCode.from_image_asset(
+                directory="./",
+                platform=Platform.LINUX_AMD64,
+                build_args={
+                    "pipeline": pipeline.id,
+                },
+                file="lambda.historic.Dockerfile",
             ),
             memory_size=1000,
             timeout=cdk.Duration.minutes(14),

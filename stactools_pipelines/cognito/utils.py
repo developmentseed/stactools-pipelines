@@ -76,7 +76,7 @@ def get_token() -> str:
     cache.set_token(
         client_id,
         jwt=jwt,
-        expires_at=data["exp"] - (60 * 1000),  # expire 1 min early for safety
+        expires_at=int(time.time()) + data["expires_in"] - 60
     )
 
     return jwt
